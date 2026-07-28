@@ -1,632 +1,676 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geometry Dash Map Roulette</title>
-  <style>
-    :root {
-      --bg: #060914;
-      --panel: rgba(13, 18, 33, 0.92);
-      --panel-soft: rgba(18, 25, 44, 0.92);
-      --line: rgba(255,255,255,0.08);
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --accent: #ff385c;
-      --gold: #fbbf24;
-      --cyan: #38bdf8;
-      --shadow: 0 26px 90px rgba(0,0,0,0.58);
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GD 맵 룰렛 — 잭팟 스핀</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#07091a;
+    --panel:#0e1228;
+    --panel2:#131836;
+    --line:rgba(140,160,255,.14);
+    --text:#f4f6ff;
+    --muted:#8b93b8;
+    --gold:#ffc931;
+    --magenta:#ff2e88;
+    --cyan:#22d3ee;
+    --step:104px;           /* card height + gap */
+    --cardH:92px;
+    --winH:468px;
+    --disp:'Russo One',system-ui,sans-serif;
+    --body:'Noto Sans KR',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 420px at 15% -5%, rgba(255,46,136,.14), transparent 60%),
+      radial-gradient(900px 420px at 90% 0%, rgba(34,211,238,.12), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--body);
+    padding:22px 18px 40px;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top left, rgba(255,56,92,0.16), transparent 28%),
-        radial-gradient(circle at top right, rgba(56,189,248,0.14), transparent 26%),
-        linear-gradient(160deg, #050814, #0c1222 60%, #070b14);
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      padding: 24px;
-    }
+  /* ── header ── */
+  header{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding:6px 4px 18px;
+  }
+  .logo{display:flex;align-items:center;gap:14px}
+  .cube{
+    width:52px;height:52px;border-radius:10px;flex:none;
+    background:linear-gradient(135deg,var(--magenta),#7c3aed 55%,var(--cyan));
+    box-shadow:0 0 24px rgba(255,46,136,.45), inset 0 0 0 3px rgba(255,255,255,.85), inset 0 0 0 7px rgba(0,0,0,.35);
+    position:relative;
+  }
+  .cube::before,.cube::after{
+    content:'';position:absolute;width:9px;height:9px;background:#fff;border-radius:2px;top:15px;
+  }
+  .cube::before{left:12px}.cube::after{right:12px}
+  h1{font-family:var(--disp);font-size:clamp(1.5rem,4vw,2.3rem);margin:0;letter-spacing:.01em;line-height:1.05}
+  h1 .hl{color:var(--gold);text-shadow:0 0 18px rgba(255,201,49,.5)}
+  .tagline{color:var(--muted);font-size:.9rem;margin-top:4px}
+  .src-note{color:var(--muted);font-size:.8rem;text-align:right}
+  .src-note a{color:var(--cyan);text-decoration:none}
 
-    .app {
-      width: min(1240px, 100%);
-      margin: 0 auto;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
+  /* ── layout ── */
+  .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}
 
-    .hero {
-      padding: 26px 28px 18px;
-      border-bottom: 1px solid var(--line);
-      background:
-        linear-gradient(135deg, rgba(255,56,92,0.11), transparent 34%),
-        linear-gradient(225deg, rgba(56,189,248,0.10), transparent 36%);
-    }
+  /* ── mode chips ── */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .chip{
+    font-family:var(--body);font-weight:700;font-size:.9rem;color:var(--text);
+    background:var(--panel2);border:1px solid var(--line);border-radius:12px;
+    padding:9px 14px;cursor:pointer;transition:transform .1s, box-shadow .15s, border-color .15s;
+  }
+  .chip:hover{transform:translateY(-1px)}
+  .chip:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .chip.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 18px rgba(255,201,49,.25);color:var(--gold)}
+  .chip small{display:block;font-weight:500;color:var(--muted);font-size:.68rem;margin-top:1px}
+  .chip.active small{color:rgba(255,201,49,.75)}
 
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 5vw, 3.3rem);
-      letter-spacing: -0.04em;
-      line-height: 1;
-    }
+  /* ── slot machine ── */
+  .machine{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:stretch}
+  .slot{
+    position:relative;height:var(--winH);border-radius:18px;overflow:hidden;
+    background:linear-gradient(180deg,#0a0d21, #10142e 50%, #0a0d21);
+    border:1px solid var(--line);
+  }
+  .slot::before,.slot::after{ /* top/bottom fade */
+    content:'';position:absolute;left:0;right:0;height:130px;z-index:3;pointer-events:none;
+  }
+  .slot::before{top:0;background:linear-gradient(180deg,#0a0d21 8%,transparent)}
+  .slot::after{bottom:0;background:linear-gradient(0deg,#0a0d21 8%,transparent)}
+  .track{position:absolute;left:14px;right:14px;top:0;will-change:transform}
+  .mcard{
+    height:var(--cardH);margin-bottom:12px;border-radius:14px;
+    display:flex;flex-direction:column;justify-content:center;gap:3px;
+    padding:0 18px;border:1px solid rgba(255,255,255,.1);
+    background:linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  }
+  .mcard .nm{font-family:var(--disp);font-size:1.06rem;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcard .rk{font-size:.78rem;color:var(--muted);font-weight:500}
+  .mcard.hot{border-color:var(--gold);background:linear-gradient(135deg, rgba(255,201,49,.18), rgba(255,46,136,.12));box-shadow:0 0 22px rgba(255,201,49,.2)}
+  .mcard.winner{
+    border-color:var(--gold);
+    background:linear-gradient(135deg, rgba(255,201,49,.32), rgba(255,46,136,.22));
+    box-shadow:0 0 34px rgba(255,201,49,.5);
+    animation:winPulse 1s ease-in-out 3;
+  }
+  @keyframes winPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
 
-    .subtitle {
-      margin: 10px 0 0;
-      max-width: 900px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
+  /* spike pointers — the signature */
+  .spike{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:0;height:0;filter:drop-shadow(0 0 8px rgba(255,201,49,.8))}
+  .spike.l{left:-1px;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:18px solid var(--gold)}
+  .spike.r{right:-1px;border-top:14px solid transparent;border-bottom:14px solid transparent;border-right:18px solid var(--gold)}
+  .centerline{
+    position:absolute;left:8px;right:8px;top:50%;transform:translateY(-50%);
+    height:calc(var(--cardH) + 10px);border-radius:16px;z-index:2;pointer-events:none;
+    border:2px solid rgba(255,201,49,.55);
+  }
+  .slot.rolling .centerline{border-color:rgba(255,201,49,.9);box-shadow:0 0 26px rgba(255,201,49,.28)}
 
-    .content {
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 18px;
-      padding: 18px;
-    }
+  /* ── side panel ── */
+  .side{display:flex;flex-direction:column;gap:10px}
+  .status{
+    border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:12px 14px;
+  }
+  .status .lb{font-size:.74rem;color:var(--muted);letter-spacing:.08em;font-weight:700}
+  .status .vl{font-family:var(--disp);font-size:1.05rem;margin-top:3px}
+  .badge{display:inline-block;font-size:.68rem;font-weight:700;border-radius:8px;padding:2px 8px;margin-top:6px}
+  .badge.live{background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid rgba(34,211,238,.4)}
+  .badge.fb{background:rgba(255,46,136,.15);color:var(--magenta);border:1px solid rgba(255,46,136,.4)}
+  .badge.loading{background:rgba(255,255,255,.08);color:var(--muted);border:1px solid var(--line)}
 
-    .card {
-      background: var(--panel-soft);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 18px;
-    }
+  .btn{
+    font-family:var(--disp);font-size:1.15rem;border:0;border-radius:14px;cursor:pointer;
+    padding:16px;color:#1a1206;letter-spacing:.04em;
+    background:linear-gradient(135deg,#ffe08a,var(--gold) 55%,#ff9d1f);
+    box-shadow:0 8px 22px rgba(255,157,31,.35), inset 0 2px 0 rgba(255,255,255,.55);
+    transition:transform .08s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.45;cursor:default;transform:none}
+  .btn.ghost{
+    font-family:var(--body);font-weight:700;font-size:.92rem;color:var(--text);
+    background:var(--panel2);border:1px solid var(--line);box-shadow:none;padding:11px;
+  }
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
 
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 1rem;
-      font-weight: 800;
-    }
+  .win{
+    border:1px solid rgba(255,201,49,.4);border-radius:14px;padding:14px;flex:1;
+    background:linear-gradient(160deg, rgba(255,201,49,.08), rgba(255,46,136,.05));
+  }
+  .win .lb{font-size:.74rem;color:var(--muted);letter-spacing:.08em;font-weight:700}
+  .win .nm{font-family:var(--disp);font-size:1.4rem;margin-top:4px;word-break:break-all;color:var(--gold)}
+  .win .mt{color:var(--muted);font-size:.85rem;margin-top:6px;line-height:1.55}
+  .win a{color:var(--cyan);text-decoration:none}
 
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
+  /* ── pool list ── */
+  .pool-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .pool-head h2{font-family:var(--disp);font-size:1rem;margin:0;letter-spacing:.03em}
+  .pool-head .cnt{color:var(--muted);font-size:.82rem}
+  .list{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow:auto;padding-right:6px}
+  .list::-webkit-scrollbar{width:8px}
+  .list::-webkit-scrollbar-thumb{background:var(--panel2);border-radius:8px}
+  .row{
+    display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;
+    padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);
+  }
+  .row .rk{font-family:var(--disp);font-size:.9rem;color:var(--cyan)}
+  .row .nm{font-weight:500;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty{color:var(--muted);text-align:center;padding:32px 0;font-size:.9rem}
 
-    .chip {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      border-radius: 9999px;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-size: 0.92rem;
-    }
-
-    .chip.active {
-      background: rgba(255,56,92,0.18);
-      border-color: rgba(255,56,92,0.45);
-    }
-
-    .spin-stage {
-      display: grid;
-      grid-template-columns: 1fr 180px;
-      gap: 14px;
-      align-items: stretch;
-      margin-bottom: 16px;
-    }
-
-    .drop-window {
-      position: relative;
-      min-height: 480px;
-      border-radius: 24px;
-      border: 1px solid var(--line);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
-        rgba(2, 6, 23, 0.74);
-      overflow: hidden;
-    }
-
-    .drop-track {
-      position: absolute;
-      inset: -120% 0 auto 0;
-      display: grid;
-      gap: 14px;
-      padding: 16px;
-      will-change: transform;
-    }
-
-    .lane-title {
-      position: absolute;
-      top: 14px;
-      left: 16px;
-      right: 16px;
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-size: 0.86rem;
-      z-index: 2;
-      pointer-events: none;
-    }
-
-    .spotlight {
-      position: absolute;
-      left: 14px;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 92px;
-      border-radius: 22px;
-      border: 2px solid rgba(255, 56, 92, 0.65);
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.12);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .map-card {
-      height: 86px;
-      display: grid;
-      align-content: center;
-      padding: 14px 18px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, rgba(255,56,92,0.96), rgba(251,191,36,0.94));
-      color: #111827;
-      font-weight: 900;
-      box-shadow: 0 16px 28px rgba(0,0,0,0.25);
-    }
-
-    .map-card small {
-      display: block;
-      margin-top: 4px;
-      font-weight: 700;
-      opacity: 0.9;
-    }
-
-    .sidebox {
-      display: grid;
-      gap: 12px;
-    }
-
-    .result {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.04);
-      padding: 16px;
-    }
-
-    .result-label {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .result-name {
-      font-size: 1.45rem;
-      font-weight: 900;
-      letter-spacing: -0.03em;
-    }
-
-    .result-meta {
-      margin-top: 8px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 9999px;
-      padding: 14px 18px;
-      font-size: 1rem;
-      font-weight: 800;
-      cursor: pointer;
-      color: #111827;
-      background: linear-gradient(135deg, #fde68a, #f59e0b);
-      box-shadow: 0 12px 24px rgba(245, 158, 11, 0.22);
-    }
-
-    button.secondary {
-      color: var(--text);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--line);
-      box-shadow: none;
-    }
-
-    .list {
-      display: grid;
-      gap: 8px;
-      max-height: 560px;
-      overflow: auto;
-      padding-right: 4px;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 88px 1fr 88px;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 12px;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.04);
-    }
-
-    .rank {
-      font-weight: 900;
-    }
-
-    .mapname {
-      font-weight: 700;
-    }
-
-    .mode {
-      text-align: right;
-      color: var(--muted);
-      font-size: 0.84rem;
-    }
-
-    .spin {
-      animation: spinPulse 0.5s linear infinite;
-    }
-
-    @keyframes spinPulse {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.14); }
-    }
-
-    @media (max-width: 960px) {
-      .content, .spin-stage { grid-template-columns: 1fr; }
-      .drop-window { min-height: 360px; }
-      .spotlight { height: 80px; }
-      .row { grid-template-columns: 1fr; }
-      .mode { text-align: left; }
-    }
-  </style>
+  @media (max-width:920px){
+    .grid,.machine{grid-template-columns:1fr}
+    :root{--winH:380px}
+    .list{max-height:340px}
+    .src-note{text-align:left}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .mcard.winner{animation:none}
+  }
+</style>
 </head>
 <body>
-  <main class="app">
-    <section class="hero">
-      <h1>Geometry Dash Map Roulette</h1>
-      <p class="subtitle">
-        맵이 위에서 아래로 떨어지는 잭팟형 룰렛입니다. AREDL을 기준으로 이지데몬, 미데, 하데, 익데, 레거시, 익텐, Top10을 고를 수 있고,
-        가능하면 실제 사이트 데이터를 가져오며, 실패하면 자동 fallback으로 돌아갑니다.
-      </p>
-    </section>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="cube" aria-hidden="true"></div>
+      <div>
+        <h1>GD 맵 <span class="hl">잭팟 룰렛</span></h1>
+        <div class="tagline">난이도 구간을 고르고 SPIN — 릴이 멈춘 맵이 오늘의 도전</div>
+      </div>
+    </div>
+    <div class="src-note">
+      순위 출처: <a href="https://aredl.net" target="_blank" rel="noopener">AREDL</a> ·
+      <a href="https://easydemonlist.pages.dev" target="_blank" rel="noopener">EDL</a> ·
+      <a href="https://mediumdemonslist.pages.dev" target="_blank" rel="noopener">MDL</a> ·
+      <a href="https://hdl.pages.dev" target="_blank" rel="noopener">HDL</a> ·
+      <a href="https://insanedemonlist.com" target="_blank" rel="noopener">IDL</a>
+    </div>
+  </header>
 
-    <section class="content">
-      <div class="card">
-        <h2 class="section-title">룰렛</h2>
-        <div class="controls" id="modeButtons"></div>
+  <div class="grid">
+    <section class="card">
+      <div class="chips" id="chips" role="tablist" aria-label="난이도 구간"></div>
 
-        <div class="spin-stage">
-          <div class="drop-window" id="dropWindow">
-            <div class="lane-title">
-              <span>TOP</span>
-              <span id="statusText">READY</span>
-              <span>BOTTOM</span>
-            </div>
-            <div class="spotlight"></div>
-            <div class="drop-track" id="dropTrack"></div>
+      <div class="machine">
+        <div class="slot" id="slot" aria-label="룰렛 릴">
+          <div class="spike l" aria-hidden="true"></div>
+          <div class="spike r" aria-hidden="true"></div>
+          <div class="centerline" aria-hidden="true"></div>
+          <div class="track" id="track"></div>
+        </div>
+
+        <div class="side">
+          <div class="status">
+            <div class="lb">선택 구간</div>
+            <div class="vl" id="stMode">—</div>
+            <span class="badge loading" id="stBadge">불러오는 중…</span>
           </div>
-
-          <div class="sidebox">
-            <div class="result">
-              <div class="result-label">선택 모드</div>
-              <div class="result-name" id="selectedMode">이지데몬</div>
-              <div class="result-meta" id="selectedMeta">구간 버튼을 눌러 시작하세요.</div>
-            </div>
-            <div class="buttons">
-              <button id="spinBtn" type="button">SPIN</button>
-              <button id="turboBtn" type="button">TURBO</button>
-              <button id="resetBtn" class="secondary" type="button">리셋</button>
-            </div>
-            <div class="result">
-              <div class="result-label">당첨 맵</div>
-              <div class="result-name" id="resultName">-</div>
-              <div class="result-meta" id="resultMeta">룰렛을 돌리면 여기에 결과가 나옵니다.</div>
-            </div>
+          <button class="btn" id="spinBtn" type="button">SPIN</button>
+          <button class="btn ghost" id="turboBtn" type="button">터보 스핀 (짧게)</button>
+          <button class="btn ghost" id="soundBtn" type="button">🔊 사운드 켜짐</button>
+          <div class="win">
+            <div class="lb">당첨 맵</div>
+            <div class="nm" id="winName">—</div>
+            <div class="mt" id="winMeta">SPIN을 누르면 결과가 여기에 표시됩니다.</div>
           </div>
         </div>
       </div>
-
-      <div class="card">
-        <h2 class="section-title">맵 풀</h2>
-        <div class="list" id="mapList"></div>
-      </div>
     </section>
-  </main>
 
-  <script>
-    const modes = [
-      {
-        id: 'easy',
-        label: '이지데몬',
-        meta: 'easydemonlist.pages.dev의 실제 목록',
-        endpoint: 'https://easydemonlist.pages.dev/',
-        fetcher: 'easy',
-        pool: [],
-      },
-      {
-        id: 'mid',
-        label: '미데',
-        meta: 'mediumdemonslist.pages.dev의 실제 목록',
-        endpoint: 'https://mediumdemonslist.pages.dev/',
-        fetcher: 'medium',
-        pool: [],
-      },
-      {
-        id: 'hard',
-        label: '하데',
-        meta: 'harddemonslist.pages.dev의 실제 목록',
-        endpoint: 'https://harddemonslist.pages.dev/',
-        fetcher: 'hard',
-        pool: [],
-      },
-      {
-        id: 'exo',
-        label: '익데',
-        meta: 'Extreme Demon 전체',
-        endpoint: 'https://aredl.net/?showToast=authRequired',
-        fetcher: 'aredl',
-        pool: [
-          { name: 'Arcturus', rank: 1, id: 107344383 },
-          { name: 'Tidal Wave', rank: 2, id: 113111924 },
-          { name: 'Kyouki', rank: 3, id: 107344384 },
-          { name: 'Acheron', rank: 4, id: 103996634 },
-          { name: 'Tartarus', rank: 5, id: 103996630 },
-          { name: 'Bloodlust', rank: 10, id: 105445427 },
-        ],
-      },
-      {
-        id: 'legacy',
-        label: '레거시',
-        meta: 'AREDL 150등 이하',
-        endpoint: 'https://aredl.net/?showToast=authRequired',
-        fetcher: 'aredl',
-        pool: [
-          { name: 'Legacy Slot A', rank: 149, id: 127320494 },
-          { name: 'Legacy Slot B', rank: 143, id: 109730342 },
-          { name: 'Legacy Slot C', rank: 132, id: 109730343 },
-          { name: 'Legacy Slot D', rank: 117, id: 109730344 },
-          { name: 'Legacy Slot E', rank: 98, id: 109730345 },
-          { name: 'Legacy Slot F', rank: 151, id: 109730346 },
-        ],
-      },
-      {
-        id: 'extended',
-        label: '익텐',
-        meta: 'AREDL 76~150',
-        endpoint: 'https://aredl.net/?showToast=authRequired',
-        fetcher: 'aredl',
-        pool: [
-          { name: 'Extended Slot A', rank: 76, id: 127320494 },
-          { name: 'Extended Slot B', rank: 84, id: 127320495 },
-          { name: 'Extended Slot C', rank: 97, id: 127320496 },
-          { name: 'Extended Slot D', rank: 112, id: 127320497 },
-          { name: 'Extended Slot E', rank: 129, id: 127320498 },
-          { name: 'Extended Slot F', rank: 150, id: 127320499 },
-        ],
-      },
-      {
-        id: 'top10',
-        label: 'Top10',
-        meta: 'AREDL 1~10',
-        endpoint: 'https://aredl.net/?showToast=authRequired',
-        fetcher: 'aredl',
-        pool: [
-          { name: 'Arcturus', rank: 1, id: 107344383 },
-          { name: 'Tidal Wave', rank: 2, id: 113111924 },
-          { name: 'Kyouki', rank: 3, id: 107344384 },
-          { name: 'Acheron', rank: 4, id: 103996634 },
-          { name: 'Tartarus', rank: 5, id: 103996630 },
-          { name: 'Bloodlust', rank: 10, id: 105445427 },
-        ],
-      },
-    ];
+    <section class="card">
+      <div class="pool-head">
+        <h2 id="poolTitle">맵 풀</h2>
+        <span class="cnt" id="poolCount"></span>
+      </div>
+      <div class="list" id="poolList"><div class="empty">데이터를 불러오는 중…</div></div>
+    </section>
+  </div>
+</div>
 
-    const modeButtons = document.getElementById('modeButtons');
-    const mapList = document.getElementById('mapList');
-    const dropTrack = document.getElementById('dropTrack');
-    const statusText = document.getElementById('statusText');
-    const selectedMode = document.getElementById('selectedMode');
-    const selectedMeta = document.getElementById('selectedMeta');
-    const resultName = document.getElementById('resultName');
-    const resultMeta = document.getElementById('resultMeta');
-    const spinBtn = document.getElementById('spinBtn');
-    const turboBtn = document.getElementById('turboBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const dropWindow = document.getElementById('dropWindow');
+<script>
+/* ────────────────────────────────────────────────
+   데이터 소스
+   - AREDL API v2 : 익데(메인 1~75) / 익텐(76~150) / 레거시(150+) / Top10
+   - TSL형 리스트 : 이지데몬 / 미데 / 하데 / 인데 (pages.dev 사이트의 data/_list.json)
+   - 전부 실패하면 내장 예비 풀로 자동 전환 (순위 표기는 부정확할 수 있음)
+──────────────────────────────────────────────── */
 
-    let activeMode = modes[0];
-    let spinning = false;
-    let trackOffset = 0;
-    let loadedPools = new Map();
-    let rafId = null;
-    let targetOffset = 0;
-    let currentSpeed = 0;
+const AREDL_API = 'https://api.aredl.net/v2/api/aredl/levels';
 
-    function fallbackPool(mode) {
-      return mode.pool.slice();
-    }
+const FALLBACK = {
+  easy:   ['The Lightning Road','xo','B','Platinum Adventure','Speed Racer','Buck Force','Extinction','Dance Massacre'],
+  mid:    ['Nine Circles','Dear Nostalgists','Ultra Paracosm','Nowise','Sunset Sandstorm','The Furious','Creation of the World','Metropolis'],
+  hard:   ['Windy Landscape','Supersonic','Down Bass','ICDX','Audio Extraction','Deception Dive','Buried Angel','Shock Therapy'],
+  insane: ['Cadrega City','Bausha Vortex','Fusion Z','Ouroboros','Hyper Paracosm','Ultra Violence','Shitty Sunrise','Sidestep'],
+  extreme:['Arcturus','Tidal Wave','Kyouki','Acheron','Avernus','Slaughterhouse','Tartarus','Abyss of Darkness','Zodiac','Bloodlust'],
+  extended:['The Golden','Sonic Wave','Cognition','Athanatos','Erebus','Sunset Sandstorm II','Falcon16','Renevant'],
+  legacy: ['Bloodbath','Cataclysm','Sakupen Hell','Yatagarasu','Athanatos','Sonic Wave','Plasma Pulse Finale','Artificial Ascent'],
+};
+const fbPool = key => FALLBACK[key].map(n => ({ name:n, rank:null }));
 
-    async function fetchPool(mode) {
-      if (loadedPools.has(mode.id)) return loadedPools.get(mode.id);
-      let pool = null;
-      try {
-        const res = await fetch(mode.endpoint, { mode: 'cors' });
-        const text = await res.text();
-        if (mode.fetcher === 'aredl') {
-          const hits = [...text.matchAll(/href="\/list\/(\d+)".*?#\s*(\d+)\s*-\s*([^<\n]+)|#\s*(\d+)\s*-\s*([^<\n]+)/gsi)]
-            .map(m => ({
-              id: Number(m[1] || 0),
-              rank: Number(m[2] || m[4] || 0),
-              name: (m[3] || m[5] || '').trim(),
-            }))
-            .filter(x => x.rank && x.name);
-          if (hits.length) pool = hits;
-        } else {
-          const hits = [...text.matchAll(/#\s*(\d+)\s*\|\s*([^\n<|]+)/g)]
-            .map(m => ({ rank: Number(m[1]), name: m[2].trim() }))
-            .filter(x => x.rank && x.name);
-          if (hits.length) pool = hits;
+const MODES = [
+  { id:'easy',   label:'이지데몬', hint:'EDL 전체',      kind:'tsl',   bases:['https://easydemonlist.pages.dev'],   fb:'easy' },
+  { id:'mid',    label:'미데',     hint:'MDL 전체',      kind:'tsl',   bases:['https://mediumdemonslist.pages.dev'],fb:'mid' },
+  { id:'hard',   label:'하데',     hint:'HDL 전체',      kind:'tsl',   bases:['https://hdl.pages.dev','https://harddemonslist.pages.dev'],  fb:'hard' },
+  { id:'insane', label:'인데',     hint:'IDL 전체',      kind:'idl',   api:'https://insanedemonlist.com/api/levels', fb:'insane' },
+  { id:'all',    label:'익데',     hint:'AREDL 전체',    kind:'aredl', range:[1,1e9],   fb:'extreme' },
+  { id:'main',   label:'메인',     hint:'AREDL 1~75',    kind:'aredl', range:[1,75],    fb:'extreme' },
+  { id:'ext',    label:'익텐',     hint:'AREDL 76~150',  kind:'aredl', range:[76,150],  fb:'extended' },
+  { id:'legacy', label:'레거시',   hint:'AREDL 150+',    kind:'aredl', range:[151,1e9], fb:'legacy' },
+  { id:'top10',  label:'Top10',    hint:'AREDL 1~10',    kind:'aredl', range:[1,10],    fb:'extreme' },
+];
+
+/* ── 상태 ── */
+const $ = id => document.getElementById(id);
+const els = {
+  chips:$('chips'), slot:$('slot'), track:$('track'),
+  stMode:$('stMode'), stBadge:$('stBadge'),
+  spin:$('spinBtn'), turbo:$('turboBtn'), sound:$('soundBtn'),
+  winName:$('winName'), winMeta:$('winMeta'),
+  poolTitle:$('poolTitle'), poolCount:$('poolCount'), poolList:$('poolList'),
+};
+let active = MODES[0];
+
+let soundOn = true;
+let aredlCache = null;              // 정규화된 AREDL 전체 목록
+const tslCache = new Map();         // modeId -> {pool, live, base}
+const poolCache = new Map();        // modeId -> {pool, live}
+
+/* ── 유틸 ── */
+const pretty = s => s.replace(/\.json$/,'').replace(/_/g,' ').trim();
+const STEP = 104, CARD_H = 92;
+
+async function fetchJSON(url, ms=9000){
+  const ctl = new AbortController();
+  const t = setTimeout(()=>ctl.abort(), ms);
+  try{
+    const res = await fetch(url, { signal:ctl.signal });
+    if(!res.ok) throw new Error(res.status);
+    return await res.json();
+  } finally { clearTimeout(t); }
+}
+
+/* ── AREDL 로딩 ── */
+async function loadAredl(){
+  if(aredlCache) return aredlCache;
+  const raw = await fetchJSON(AREDL_API);
+  const arr = Array.isArray(raw) ? raw : (raw.data || raw.levels || []);
+  const norm = arr.map(x => ({
+    name:  x.name ?? x.level_name ?? '',
+    rank:  x.position ?? x.rank ?? null,
+    levelId: x.level_id ?? x.levelID ?? x.gd_id ?? null,
+    legacy: x.legacy === true || x.is_legacy === true,
+  })).filter(x => x.name && x.rank);
+  if(!norm.length) throw new Error('empty');
+  norm.sort((a,b)=>a.rank-b.rank);
+  aredlCache = norm;
+  return norm;
+}
+
+/* ── TSL형 리스트 로딩 (EDL/MDL/HDL/IDL) ── */
+async function loadTsl(mode){
+  if(tslCache.has(mode.id)) return tslCache.get(mode.id);
+  for(const base of mode.bases){
+    try{
+      const files = await fetchJSON(`${base}/data/_list.json`);
+      if(Array.isArray(files) && files.length){
+        const pool = files
+          .filter(f => typeof f === 'string' && !f.startsWith('_'))
+          .map((f,i) => ({ name:pretty(f), rank:i+1, file:f, base }));
+        if(pool.length){
+          const out = { pool, live:true, base };
+          tslCache.set(mode.id, out);
+          return out;
         }
-      } catch {
-        pool = null;
       }
-      const finalPool = pool && pool.length ? pool : fallbackPool(mode);
-      loadedPools.set(mode.id, finalPool);
-      return finalPool;
-    }
+    }catch(e){ /* 다음 후보 시도 */ }
+  }
+  const out = { pool:fbPool(mode.fb), live:false, base:null };
+  tslCache.set(mode.id, out);
+  return out;
+}
 
-    async function enrichAredlLevel(item) {
-      if (!item.id) return item;
-      try {
-        const res = await fetch(`https://api.aredl.net/v2/api/aredl/levels/${item.id}`, { mode: 'cors' });
-        const data = await res.json();
-        return {
-          ...item,
-          apiName: data?.name || data?.level_name || item.name,
-          apiRank: data?.position || data?.rank || item.rank,
-          apiTier: data?.nlw_tier || data?.tier || null,
-        };
-      } catch {
-        return item;
+/* ── IDL 로딩 (insanedemonlist.com 공식 API) ── */
+let idlCache = null;
+async function loadIdl(mode){
+  if(idlCache) return idlCache;
+  const raw = await fetchJSON(mode.api);
+  const arr = Array.isArray(raw) ? raw : (raw.data || raw.levels || []);
+  const pool = arr
+    .filter(x => x && x.name && x.position && !x.removalDate)
+    .map(x => ({
+      name: x.name,
+      rank: x.position,
+      publisher: x.publisher || null,
+      yt: x.ytcode || null,
+    }))
+    .sort((a,b)=>a.rank-b.rank);
+  if(!pool.length) throw new Error('empty');
+  idlCache = pool;
+  return pool;
+}
+
+/* ── 모드별 풀 ── */
+async function getPool(mode){
+  if(poolCache.has(mode.id)) return poolCache.get(mode.id);
+  let out;
+  if(mode.kind === 'aredl'){
+    try{
+      const all = await loadAredl();
+      let pool;
+      if(mode.id === 'legacy'){
+        pool = all.filter(x => x.legacy || x.rank > 150);
+      } else {
+        pool = all.filter(x => !x.legacy && x.rank >= mode.range[0] && x.rank <= mode.range[1]);
       }
+      out = pool.length ? { pool, live:true } : { pool:fbPool(mode.fb), live:false };
+    }catch(e){
+      out = { pool:fbPool(mode.fb), live:false };
     }
-
-    function renderButtons() {
-      modeButtons.innerHTML = '';
-      modes.forEach(mode => {
-        const btn = document.createElement('button');
-        btn.className = `chip ${mode.id === activeMode.id ? 'active' : ''}`;
-        btn.textContent = mode.label;
-        btn.addEventListener('click', async () => {
-          if (spinning) return;
-          activeMode = mode;
-          selectedMode.textContent = mode.label;
-          selectedMeta.textContent = mode.meta;
-          resultName.textContent = '-';
-          resultMeta.textContent = '룰렛을 돌리면 여기에 결과가 나옵니다.';
-          statusText.textContent = 'LOADED';
-          renderButtons();
-          await renderList();
-          await buildTrack(mode);
-        });
-        modeButtons.appendChild(btn);
-      });
+  } else if(mode.kind === 'idl'){
+    try{
+      const pool = await loadIdl(mode);
+      out = { pool, live:true };
+    }catch(e){
+      out = { pool:fbPool(mode.fb), live:false };
     }
+  } else {
+    const r = await loadTsl(mode);
+    out = { pool:r.pool, live:r.live };
+  }
+  poolCache.set(mode.id, out);
+  return out;
+}
 
-    async function renderList() {
-      const pool = await fetchPool(activeMode);
-      mapList.innerHTML = '';
-      pool.slice().sort((a, b) => a.rank - b.rank).forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'row';
-        row.innerHTML = `
-          <div class="rank">#${item.rank}</div>
-          <div class="mapname">${item.name}</div>
-          <div class="mode">${activeMode.id}</div>
-        `;
-        mapList.appendChild(row);
-      });
+/* ── 사운드 (WebAudio, 파일 없음) ── */
+let actx = null;
+function beep(freq, dur=0.05, gain=0.05, type='square'){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(gain, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + dur);
+  }catch(e){}
+}
+function winChime(){
+  [523, 659, 784, 1047].forEach((f,i)=>setTimeout(()=>beep(f, .18, .07, 'triangle'), i*110));
+}
+
+/* ── UI 렌더 ── */
+function renderChips(){
+  els.chips.innerHTML = '';
+  MODES.forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (m.id===active.id ? ' active':'');
+    b.setAttribute('role','tab');
+    b.innerHTML = `${m.label}<small>${m.hint}</small>`;
+    b.addEventListener('click', () => { if(!reel.rolling) selectMode(m); });
+    els.chips.appendChild(b);
+  });
+}
+
+function setBadge(state, n){
+  const b = els.stBadge;
+  if(state==='loading'){ b.className='badge loading'; b.textContent='불러오는 중…'; }
+  else if(state==='live'){ b.className='badge live'; b.textContent=`실시간 데이터 · ${n}개 맵`; }
+  else { b.className='badge fb'; b.textContent=`예비 풀 사용 중 · ${n}개 (순위 비공식)`; }
+}
+
+function renderPoolList(pool){
+  els.poolCount.textContent = `${pool.length}개`;
+  els.poolList.innerHTML = '';
+  if(!pool.length){ els.poolList.innerHTML = '<div class="empty">맵이 없습니다.</div>'; return; }
+  const frag = document.createDocumentFragment();
+  pool.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<div class="rk">${p.rank ? '#'+p.rank : '—'}</div><div class="nm"></div>`;
+    row.querySelector('.nm').textContent = p.name;
+    frag.appendChild(row);
+  });
+  els.poolList.appendChild(frag);
+}
+
+function cardHTML(item){
+  const d = document.createElement('div');
+  d.className = 'mcard';
+  d.innerHTML = `<div class="nm"></div><div class="rk"></div>`;
+  d.querySelector('.nm').textContent = item.name;
+  d.querySelector('.rk').textContent = (item.rank ? `#${item.rank} · ` : '') + active.label;
+  return d;
+}
+
+/* 대기 화면: 풀 일부를 트랙에 깔아둔다 */
+function idleTrack(pool){
+  els.track.innerHTML = '';
+  const n = Math.min(pool.length, 8) || 1;
+  for(let i=0;i<n;i++) els.track.appendChild(cardHTML(pool[i % pool.length]));
+  els.track.style.transform = 'translateY(0px)';
+}
+
+async function selectMode(m){
+  active = m;
+  renderChips();
+  els.stMode.textContent = `${m.label} · ${m.hint}`;
+  setBadge('loading');
+  els.poolTitle.textContent = `${m.label} 맵 풀`;
+  els.winName.textContent = '—';
+  els.winMeta.textContent = 'SPIN을 누르면 결과가 여기에 표시됩니다.';
+  const { pool, live } = await getPool(m);
+  if(active.id !== m.id) return; // 로딩 중 다른 모드로 이동
+  setBadge(live?'live':'fb', pool.length);
+  renderPoolList(pool);
+  idleTrack(pool);
+}
+
+/* ────────────────────────────────────────────────
+   스핀 (물리 기반)
+   - SPIN 시작 → 속도가 마찰로 줄어들며 릴이 감속
+   - 도는 중에 SPIN을 또 누르면 속도가 다시 붙음 (부스트)
+   - 속도가 거의 0이 되면 가장 가까운 카드에 스냅 → 그 카드가 당첨
+   - 카드 시퀀스는 같은 맵이 직전/전전 카드와 겹치지 않게 생성
+──────────────────────────────────────────────── */
+function shuffled(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+const reel = {
+  rolling:false, y:0, v:0, friction:1.05, lastT:0,
+  nodes:[], items:[], lastHot:-1,
+  bag:[], lastA:null, lastB:null, pool:[],
+};
+const V_BASE = 2900, V_JITTER = 500, V_BOOST = 1500, V_MAX = 4300;
+
+/* 같은 맵이 연속(0칸/1칸 간격)으로 나오지 않게 뽑기 */
+function nextItem(){
+  const pool = reel.pool;
+  if(pool.length === 1) return pool[0];
+  for(let tries=0; tries<24; tries++){
+    if(!reel.bag.length) reel.bag = shuffled(pool);
+    const cand = reel.bag[reel.bag.length-1];
+    if(pool.length < 3 ? cand !== reel.lastA : (cand !== reel.lastA && cand !== reel.lastB)){
+      reel.bag.pop();
+      reel.lastB = reel.lastA; reel.lastA = cand;
+      return cand;
     }
+    reel.bag.unshift(reel.bag.pop()); // 충돌 카드는 가방 뒤로
+  }
+  const c = reel.bag.pop();
+  reel.lastB = reel.lastA; reel.lastA = c;
+  return c;
+}
 
-    async function buildTrack(mode) {
-      const pool = await fetchPool(mode);
-      const sequence = [];
-      for (let i = 0; i < 26; i += 1) {
-        sequence.push(pool[i % pool.length]);
-      }
-      dropTrack.innerHTML = sequence.map(item => `
-        <div class="map-card">
-          ${item.name}
-          <small>#${item.rank} · ${mode.label}</small>
-        </div>
-      `).join('');
-      trackOffset = 0;
-      dropTrack.style.transform = 'translateY(0)';
+function appendCard(){
+  const item = nextItem();
+  reel.items.push(item);
+  reel.nodes.push(els.track.appendChild(cardHTML(item)));
+}
+
+/* 위로 지나간 카드 정리 (부스트 연타로 트랙이 무한히 길어지는 것 방지) */
+function pruneTop(){
+  const centerIdx = Math.floor((els.slot.clientHeight/2 - reel.y)/STEP);
+  if(centerIdx > 260){
+    const k = 200;
+    for(let i=0;i<k;i++) reel.nodes[i].remove();
+    reel.nodes.splice(0,k);
+    reel.items.splice(0,k);
+    reel.y += k*STEP;
+    reel.lastHot -= k;
+  }
+}
+
+function centerIndex(){
+  return Math.round((els.slot.clientHeight/2 - CARD_H/2 - reel.y)/STEP);
+}
+
+function setRollingUI(on){
+  els.spin.textContent = on ? 'SPIN +부스트' : 'SPIN';
+  els.turbo.textContent = on ? '빨리 멈추기' : '터보 스핀 (짧게)';
+}
+
+function frame(now){
+  const dt = Math.min(0.05, (now - reel.lastT)/1000);
+  reel.lastT = now;
+  reel.v = Math.max(0, reel.v * Math.exp(-reel.friction*dt) - 26*dt);
+  reel.y -= reel.v * dt;
+
+  // 앞쪽 카드 미리 채우기
+  const need = centerIndex() + 14;
+  while(reel.items.length < need) appendCard();
+  pruneTop();
+
+  els.track.style.transform = `translateY(${reel.y}px)`;
+
+  const c = centerIndex();
+  if(c !== reel.lastHot){
+    if(reel.nodes[reel.lastHot]) reel.nodes[reel.lastHot].classList.remove('hot');
+    if(reel.nodes[c]) reel.nodes[c].classList.add('hot');
+    reel.lastHot = c;
+    beep(880 + Math.random()*120, .03, .035);
+  }
+
+  if(reel.v > 55){ requestAnimationFrame(frame); }
+  else settle();
+}
+
+function settle(){
+  const n = centerIndex();
+  const targetY = els.slot.clientHeight/2 - CARD_H/2 - n*STEP;
+  const fromY = reel.y;
+  const start = performance.now();
+  const dur = 520;
+  const easeOutBack = t => { const c1=1.2, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); };
+  function step(now){
+    const t = Math.min(1,(now-start)/dur);
+    reel.y = fromY + (targetY - fromY)*easeOutBack(t);
+    els.track.style.transform = `translateY(${reel.y}px)`;
+    if(t < 1) requestAnimationFrame(step);
+    else finish(n);
+  }
+  requestAnimationFrame(step);
+}
+
+async function finish(n){
+  const winner = reel.items[n];
+  if(reel.nodes[n]){
+    reel.nodes[n].classList.remove('hot');
+    reel.nodes[n].classList.add('winner');
+  }
+  winChime();
+
+  let detailName = winner.name, levelId = winner.levelId || null;
+  if(winner.file && winner.base){
+    try{
+      const d = await fetchJSON(`${winner.base}/data/${winner.file.replace(/\.json$/,'')}.json`, 6000);
+      detailName = d.name || detailName;
+      levelId = d.id || d.levelID || levelId;
+    }catch(e){}
+  }
+
+  els.winName.textContent = detailName;
+  const bits = [];
+  if(winner.rank) bits.push(`#${winner.rank}`);
+  bits.push(`${active.label} (${active.hint})`);
+  if(winner.publisher) bits.push(`by ${winner.publisher}`);
+  if(levelId) bits.push(`레벨 ID <a href="https://gdbrowser.com/${levelId}" target="_blank" rel="noopener">${levelId}</a>`);
+  if(winner.yt) bits.push(`<a href="https://youtu.be/${winner.yt}" target="_blank" rel="noopener">영상 보기</a>`);
+  els.winMeta.innerHTML = bits.join(' · ');
+
+  els.slot.classList.remove('rolling');
+  reel.rolling = false;
+  setRollingUI(false);
+}
+
+async function spin(turbo=false){
+  // 이미 도는 중이면: SPIN은 부스트, 터보는 급제동
+  if(reel.rolling){
+    if(turbo){
+      reel.friction = 3.6;
+      beep(300, .1, .05, 'sawtooth');
+    } else {
+      reel.v = Math.min(V_MAX, reel.v + V_BOOST);
+      reel.friction = 1.05;
+      beep(520, .09, .06, 'sawtooth');
+      els.winMeta.textContent = '부스트! 릴이 다시 가속합니다…';
     }
+    return;
+  }
 
-    function animateDrop(duration) {
-      const start = performance.now();
-      const startOffset = trackOffset;
-      const delta = targetOffset - startOffset;
-      const easeOut = t => 1 - Math.pow(1 - t, 4);
+  if(reel.starting) return;
+  reel.starting = true;
+  const { pool } = await getPool(active);
+  reel.starting = false;
+  if(!pool.length) return;
 
-      const step = now => {
-        const elapsed = now - start;
-        const t = Math.min(1, elapsed / duration);
-        const eased = easeOut(t);
-        const offset = startOffset + delta * eased;
-        dropTrack.style.transform = `translateY(${offset}px)`;
-        if (t < 1) {
-          rafId = requestAnimationFrame(step);
-        } else {
-          trackOffset = targetOffset;
-        }
-      };
+  reel.rolling = true;
+  reel.pool = pool;
+  reel.bag = []; reel.lastA = null; reel.lastB = null;
+  reel.items = []; reel.nodes = []; reel.lastHot = -1;
+  reel.y = 0;
+  reel.friction = turbo ? 1.75 : 1.05;
+  reel.v = (turbo ? V_BASE*0.72 : V_BASE) + Math.random()*V_JITTER;
+  els.track.innerHTML = '';
 
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(step);
-    }
+  els.slot.classList.add('rolling');
+  setRollingUI(true);
+  els.winName.textContent = '…';
+  els.winMeta.textContent = '릴 회전 중… SPIN을 또 누르면 부스트!';
 
-    async function spin(multiplier = 1) {
-      if (spinning) return;
-      spinning = true;
-      spinBtn.disabled = true;
-      turboBtn.disabled = true;
-      dropWindow.classList.add('spin');
-      statusText.textContent = 'SPINNING';
-      resultName.textContent = '-';
-      resultMeta.textContent = '룰렛이 아래로 떨어지는 중...';
+  while(reel.items.length < centerIndex() + 14) appendCard();
+  reel.lastT = performance.now();
+  requestAnimationFrame(frame);
+}
 
-      const mode = activeMode;
-      const pool = await fetchPool(mode);
-      const choice = pool[Math.floor(Math.random() * pool.length)];
-      const enrichedChoice = mode.fetcher === 'aredl' ? await enrichAredlLevel(choice) : choice;
-      const duration = 1100 + Math.round(420 * multiplier);
-      const travel = 1180 + Math.random() * 820 * multiplier;
-      targetOffset = trackOffset + travel;
-      await buildTrack(mode);
-      animateDrop(duration);
+/* ── 이벤트 ── */
+els.spin.addEventListener('click', ()=>spin(false));
+els.turbo.addEventListener('click', ()=>spin(true));
+els.sound.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  els.sound.textContent = soundOn ? '🔊 사운드 켜짐' : '🔇 사운드 꺼짐';
+});
 
-      setTimeout(() => {
-        spinning = false;
-        spinBtn.disabled = false;
-        turboBtn.disabled = false;
-        dropWindow.classList.remove('spin');
-        statusText.textContent = 'READY';
-        resultName.textContent = enrichedChoice.apiName || enrichedChoice.name;
-        resultMeta.textContent = enrichedChoice.apiTier
-          ? `#${enrichedChoice.apiRank || enrichedChoice.rank} · ${mode.label} · ${mode.meta} · ${enrichedChoice.apiTier}`
-          : `#${enrichedChoice.apiRank || enrichedChoice.rank} · ${mode.label} · ${mode.meta}`;
-      }, duration);
-    }
-
-    async function reset() {
-      if (spinning) return;
-      statusText.textContent = 'READY';
-      resultName.textContent = '-';
-      resultMeta.textContent = '룰렛을 돌리면 여기에 결과가 나옵니다.';
-      trackOffset = 0;
-      targetOffset = 0;
-      if (rafId) cancelAnimationFrame(rafId);
-      await buildTrack(activeMode);
-    }
-
-    spinBtn.addEventListener('click', () => spin(1));
-    turboBtn.addEventListener('click', () => spin(1.8));
-    resetBtn.addEventListener('click', reset);
-
-    (async () => {
-      selectedMode.textContent = activeMode.label;
-      selectedMeta.textContent = activeMode.meta;
-      renderButtons();
-      await renderList();
-      await buildTrack(activeMode);
-    })();
-  </script>
+/* ── 시작 ── */
+renderChips();
+selectMode(active);
+</script>
 </body>
 </html>
