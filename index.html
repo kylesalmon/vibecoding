@@ -343,47 +343,26 @@
       {
         id: 'easy',
         label: '이지데몬',
-        meta: '쉬운 Extreme Demon 구간',
-        endpoint: 'https://easydemonlist.pages.dev/#/',
+        meta: 'easydemonlist.pages.dev의 실제 목록',
+        endpoint: 'https://easydemonlist.pages.dev/',
         fetcher: 'easy',
-        pool: [
-          { name: 'Bloodlust', rank: 1 },
-          { name: 'Sakupen Circles', rank: 2 },
-          { name: 'Kocmoc', rank: 5 },
-          { name: 'Avernus', rank: 8 },
-          { name: 'Firework', rank: 12 },
-          { name: 'Slaughterhouse', rank: 15 },
-        ],
+        pool: [],
       },
       {
         id: 'mid',
         label: '미데',
-        meta: '중간 Extreme Demon 구간',
-        endpoint: 'https://mediumdemonslist.pages.dev/#/',
+        meta: 'mediumdemonslist.pages.dev의 실제 목록',
+        endpoint: 'https://mediumdemonslist.pages.dev/',
         fetcher: 'medium',
-        pool: [
-          { name: 'Digital Descent', rank: 24 },
-          { name: 'The Golden', rank: 31 },
-          { name: 'Tartarus', rank: 39 },
-          { name: 'Edge of Destiny', rank: 47 },
-          { name: 'Acheron', rank: 52 },
-          { name: 'Acu', rank: 58 },
-        ],
+        pool: [],
       },
       {
         id: 'hard',
         label: '하데',
-        meta: '어려운 Extreme Demon 구간',
-        endpoint: 'https://harddemonslist.pages.dev/#/',
+        meta: 'harddemonslist.pages.dev의 실제 목록',
+        endpoint: 'https://harddemonslist.pages.dev/',
         fetcher: 'hard',
-        pool: [
-          { name: 'Spectrum Cyclone', rank: 64 },
-          { name: 'Kyouki', rank: 71 },
-          { name: 'Athanatos', rank: 88 },
-          { name: 'Nhelv', rank: 102 },
-          { name: 'Cognition', rank: 121 },
-          { name: 'Rust', rank: 138 },
-        ],
+        pool: [],
       },
       {
         id: 'exo',
@@ -465,6 +444,9 @@
     let spinning = false;
     let trackOffset = 0;
     let loadedPools = new Map();
+    let rafId = null;
+    let targetOffset = 0;
+    let currentSpeed = 0;
 
     function fallbackPool(mode) {
       return mode.pool.slice();
@@ -474,16 +456,18 @@
       if (loadedPools.has(mode.id)) return loadedPools.get(mode.id);
       let pool = null;
       try {
+        const res = await fetch(mode.endpoint, { mode: 'cors' });
+        const text = await res.text();
         if (mode.fetcher === 'aredl') {
-          const res = await fetch('https://aredl.net/?showToast=authRequired');
-          const text = await res.text();
-          const matches = [...text.matchAll(/#\d+\s*-\s*([^<\n]+)/g)].map(m => ({ name: m[1].trim(), rank: Number(m[0].match(/#(\d+)/)?.[1] || 0) }));
-          if (matches.length) pool = matches.slice(0, 30);
+          const hits = [...text.matchAll(/#\s*(\d+)\s*-\s*([^<\n]+)|#\s*(\d+)\s*([^\n<]+)/g)]
+            .map(m => ({ rank: Number(m[1] || m[3]), name: (m[2] || m[4] || '').trim() }))
+            .filter(x => x.rank && x.name);
+          if (hits.length) pool = hits;
         } else {
-          const res = await fetch(mode.endpoint);
-          const text = await res.text();
-          const matches = [...text.matchAll(/#\s*(\d+)\s*([A-Za-z0-9'’\-\s().]+)/g)].map(m => ({ name: m[2].trim(), rank: Number(m[1]) }));
-          if (matches.length) pool = matches.slice(0, 30);
+          const hits = [...text.matchAll(/#\s*(\d+)\s*\|\s*([^\n<|]+)/g)]
+            .map(m => ({ rank: Number(m[1]), name: m[2].trim() }))
+            .filter(x => x.rank && x.name);
+          if (hits.length) pool = hits;
         }
       } catch {
         pool = null;
@@ -543,8 +527,30 @@
         </div>
       `).join('');
       trackOffset = 0;
-      dropTrack.style.transition = 'none';
       dropTrack.style.transform = 'translateY(0)';
+    }
+
+    function animateDrop(duration) {
+      const start = performance.now();
+      const startOffset = trackOffset;
+      const delta = targetOffset - startOffset;
+      const easeOut = t => 1 - Math.pow(1 - t, 4);
+
+      const step = now => {
+        const elapsed = now - start;
+        const t = Math.min(1, elapsed / duration);
+        const eased = easeOut(t);
+        const offset = startOffset + delta * eased;
+        dropTrack.style.transform = `translateY(${offset}px)`;
+        if (t < 1) {
+          rafId = requestAnimationFrame(step);
+        } else {
+          trackOffset = targetOffset;
+        }
+      };
+
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(step);
     }
 
     async function spin(multiplier = 1) {
@@ -560,15 +566,11 @@
       const mode = activeMode;
       const pool = await fetchPool(mode);
       const choice = pool[Math.floor(Math.random() * pool.length)];
-      const duration = 1500 + Math.round(600 * multiplier);
-      const travel = 980 + Math.random() * 540 * multiplier;
-      trackOffset += travel;
-
+      const duration = 1100 + Math.round(420 * multiplier);
+      const travel = 1180 + Math.random() * 820 * multiplier;
+      targetOffset = trackOffset + travel;
       await buildTrack(mode);
-      dropTrack.style.transition = `transform ${duration}ms cubic-bezier(.12,.82,.15,1)`;
-      requestAnimationFrame(() => {
-        dropTrack.style.transform = `translateY(${trackOffset}px)`;
-      });
+      animateDrop(duration);
 
       setTimeout(() => {
         spinning = false;
@@ -587,6 +589,8 @@
       resultName.textContent = '-';
       resultMeta.textContent = '룰렛을 돌리면 여기에 결과가 나옵니다.';
       trackOffset = 0;
+      targetOffset = 0;
+      if (rafId) cancelAnimationFrame(rafId);
       await buildTrack(activeMode);
     }
 
