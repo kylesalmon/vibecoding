@@ -6,37 +6,34 @@
   <title>Geometry Dash Map Roulette</title>
   <style>
     :root {
-      --bg: #070b14;
-      --panel: rgba(11, 16, 28, 0.86);
-      --panel-2: rgba(17, 24, 39, 0.95);
-      --line: rgba(255, 255, 255, 0.08);
+      --bg: #060914;
+      --panel: rgba(13, 18, 33, 0.92);
+      --panel-soft: rgba(18, 25, 44, 0.92);
+      --line: rgba(255,255,255,0.08);
       --text: #f8fafc;
       --muted: #94a3b8;
+      --accent: #ff385c;
       --gold: #fbbf24;
-      --pink: #ff385c;
       --cyan: #38bdf8;
-      --green: #34d399;
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+      --shadow: 0 26px 90px rgba(0,0,0,0.58);
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(255, 56, 92, 0.18), transparent 28%),
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 26%),
-        linear-gradient(160deg, #050816, #0d1324 55%, #070b14);
+        radial-gradient(circle at top left, rgba(255,56,92,0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(56,189,248,0.14), transparent 26%),
+        linear-gradient(160deg, #050814, #0c1222 60%, #070b14);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 24px;
-      display: grid;
-      place-items: center;
     }
 
     .app {
-      width: min(1200px, 100%);
+      width: min(1240px, 100%);
+      margin: 0 auto;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 28px;
@@ -45,36 +42,36 @@
     }
 
     .hero {
-      padding: 28px 28px 18px;
+      padding: 26px 28px 18px;
       border-bottom: 1px solid var(--line);
       background:
-        linear-gradient(135deg, rgba(255, 56, 92, 0.12), transparent 35%),
-        linear-gradient(225deg, rgba(56, 189, 248, 0.10), transparent 32%);
+        linear-gradient(135deg, rgba(255,56,92,0.11), transparent 34%),
+        linear-gradient(225deg, rgba(56,189,248,0.10), transparent 36%);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-size: clamp(2rem, 5vw, 3.3rem);
       letter-spacing: -0.04em;
       line-height: 1;
     }
 
     .subtitle {
       margin: 10px 0 0;
+      max-width: 900px;
       color: var(--muted);
-      line-height: 1.6;
-      max-width: 840px;
+      line-height: 1.55;
     }
 
     .content {
       display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
+      grid-template-columns: 1.05fr 0.95fr;
       gap: 18px;
       padding: 18px;
     }
 
     .card {
-      background: var(--panel-2);
+      background: var(--panel-soft);
       border: 1px solid var(--line);
       border-radius: 22px;
       padding: 18px;
@@ -83,8 +80,7 @@
     .section-title {
       margin: 0 0 14px;
       font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
+      font-weight: 800;
     }
 
     .controls {
@@ -102,112 +98,93 @@
       padding: 10px 14px;
       cursor: pointer;
       font-size: 0.92rem;
-      transition: transform 120ms ease, background 120ms ease;
     }
 
-    .chip:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
     .chip.active {
-      border-color: rgba(255, 56, 92, 0.55);
-      background: rgba(255, 56, 92, 0.16);
+      background: rgba(255,56,92,0.18);
+      border-color: rgba(255,56,92,0.45);
     }
 
-    .spin-row {
+    .spin-stage {
       display: grid;
+      grid-template-columns: 1fr 180px;
       gap: 14px;
-      grid-template-columns: 1fr 170px;
-      align-items: center;
+      align-items: stretch;
       margin-bottom: 16px;
     }
 
-    .display {
-      min-height: 150px;
+    .drop-window {
+      position: relative;
+      min-height: 480px;
       border-radius: 24px;
       border: 1px solid var(--line);
       background:
         linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
-        rgba(0,0,0,0.24);
-      display: grid;
-      place-items: center;
-      position: relative;
+        rgba(2, 6, 23, 0.74);
       overflow: hidden;
-      padding: 18px;
     }
 
-    .display::before,
-    .display::after {
-      content: "";
+    .drop-track {
       position: absolute;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(251,191,36,0.18), transparent 65%);
-      filter: blur(10px);
+      inset: -120% 0 auto 0;
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      will-change: transform;
+    }
+
+    .lane-title {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.86rem;
+      z-index: 2;
       pointer-events: none;
     }
-    .display::before { top: -140px; left: -100px; }
-    .display::after { right: -120px; bottom: -160px; background: radial-gradient(circle, rgba(255,56,92,0.18), transparent 65%); }
 
-    .roulette {
-      position: relative;
-      z-index: 1;
-      width: min(100%, 720px);
+    .spotlight {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 92px;
+      border-radius: 22px;
+      border: 2px solid rgba(255, 56, 92, 0.65);
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.12);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .map-card {
+      height: 86px;
+      display: grid;
+      align-content: center;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,56,92,0.96), rgba(251,191,36,0.94));
+      color: #111827;
+      font-weight: 900;
+      box-shadow: 0 16px 28px rgba(0,0,0,0.25);
+    }
+
+    .map-card small {
+      display: block;
+      margin-top: 4px;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    .sidebox {
       display: grid;
       gap: 12px;
     }
 
-    .band {
-      height: 86px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03)),
-        rgba(3, 7, 18, 0.78);
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .band-track {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      white-space: nowrap;
-      will-change: transform;
-      transform: translateX(0);
-    }
-
-    .map-pill {
-      min-width: 200px;
-      padding: 16px 18px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, rgba(255,56,92,0.95), rgba(251,191,36,0.92));
-      color: #111827;
-      font-weight: 800;
-      box-shadow: 0 14px 28px rgba(0,0,0,0.24);
-      text-align: center;
-    }
-
-    .map-pill small {
-      display: block;
-      margin-top: 4px;
-      font-weight: 700;
-      opacity: 0.92;
-    }
-
-    .winner {
-      margin-top: 4px;
-      text-align: center;
-      font-size: 1.1rem;
-      color: var(--muted);
-    }
-
     .result {
-      display: grid;
-      gap: 14px;
-    }
-
-    .result-box {
       border: 1px solid var(--line);
       border-radius: 18px;
       background: rgba(255,255,255,0.04);
@@ -221,9 +198,8 @@
     }
 
     .result-name {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #fff;
+      font-size: 1.45rem;
+      font-weight: 900;
       letter-spacing: -0.03em;
     }
 
@@ -233,11 +209,10 @@
       line-height: 1.55;
     }
 
-    .button-row {
+    .buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 14px;
     }
 
     button {
@@ -245,16 +220,16 @@
       border-radius: 9999px;
       padding: 14px 18px;
       font-size: 1rem;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       color: #111827;
       background: linear-gradient(135deg, #fde68a, #f59e0b);
-      box-shadow: 0 12px 26px rgba(245, 158, 11, 0.22);
+      box-shadow: 0 12px 24px rgba(245, 158, 11, 0.22);
     }
 
     button.secondary {
-      background: rgba(255,255,255,0.06);
       color: var(--text);
+      background: rgba(255,255,255,0.05);
       border: 1px solid var(--line);
       box-shadow: none;
     }
@@ -262,14 +237,14 @@
     .list {
       display: grid;
       gap: 8px;
-      max-height: 460px;
+      max-height: 560px;
       overflow: auto;
       padding-right: 4px;
     }
 
     .row {
       display: grid;
-      grid-template-columns: 88px 1fr 64px;
+      grid-template-columns: 88px 1fr 88px;
       gap: 10px;
       align-items: center;
       padding: 10px 12px;
@@ -279,34 +254,32 @@
     }
 
     .rank {
-      font-size: 0.9rem;
-      font-weight: 800;
-      color: #fff;
+      font-weight: 900;
     }
 
     .mapname {
-      color: var(--text);
       font-weight: 700;
     }
 
     .mode {
       text-align: right;
       color: var(--muted);
-      font-size: 0.85rem;
+      font-size: 0.84rem;
     }
 
-    .flash {
-      animation: flash 1s ease-in-out infinite;
+    .spin {
+      animation: spinPulse 0.5s linear infinite;
     }
 
-    @keyframes flash {
-      0%, 100% { filter: saturate(1); transform: scale(1); }
-      50% { filter: saturate(1.35) brightness(1.08); transform: scale(1.01); }
+    @keyframes spinPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.14); }
     }
 
-    @media (max-width: 940px) {
-      .content { grid-template-columns: 1fr; }
-      .spin-row { grid-template-columns: 1fr; }
+    @media (max-width: 960px) {
+      .content, .spin-stage { grid-template-columns: 1fr; }
+      .drop-window { min-height: 360px; }
+      .spotlight { height: 80px; }
       .row { grid-template-columns: 1fr; }
       .mode { text-align: left; }
     }
@@ -317,8 +290,8 @@
     <section class="hero">
       <h1>Geometry Dash Map Roulette</h1>
       <p class="subtitle">
-        AREDL 구간을 기반으로 이지데몬, 미데, 하데, 익데, 레거시, 익텐, Top10 중 하나를 고른 뒤 잭팟처럼 돌아가는 룰렛을 멈춰 맵을 뽑습니다.
-        Legacy는 150등 이하, ExTended는 76~150, Main은 1~75를 뜻합니다.
+        맵이 위에서 아래로 떨어지는 잭팟형 룰렛입니다. AREDL을 기준으로 이지데몬, 미데, 하데, 익데, 레거시, 익텐, Top10을 고를 수 있고,
+        가능하면 실제 사이트 데이터를 가져오며, 실패하면 자동 fallback으로 돌아갑니다.
       </p>
     </section>
 
@@ -327,33 +300,34 @@
         <h2 class="section-title">룰렛</h2>
         <div class="controls" id="modeButtons"></div>
 
-        <div class="spin-row">
-          <div class="display flash" id="display">
-            <div class="roulette">
-              <div class="band">
-                <div class="band-track" id="bandTrack"></div>
-              </div>
-              <div class="winner" id="winnerText">버튼을 눌러 룰렛을 돌려보세요.</div>
+        <div class="spin-stage">
+          <div class="drop-window" id="dropWindow">
+            <div class="lane-title">
+              <span>TOP</span>
+              <span id="statusText">READY</span>
+              <span>BOTTOM</span>
             </div>
+            <div class="spotlight"></div>
+            <div class="drop-track" id="dropTrack"></div>
           </div>
-          <div>
-            <div class="result-box">
-              <div class="result-label">선택된 구간</div>
+
+          <div class="sidebox">
+            <div class="result">
+              <div class="result-label">선택 모드</div>
               <div class="result-name" id="selectedMode">이지데몬</div>
-              <div class="result-meta" id="selectedMeta">AREDL 기준으로 해당 구간의 맵들만 룰렛에 들어갑니다.</div>
+              <div class="result-meta" id="selectedMeta">구간 버튼을 눌러 시작하세요.</div>
             </div>
-            <div class="button-row">
+            <div class="buttons">
               <button id="spinBtn" type="button">SPIN</button>
-              <button id="hardSpinBtn" class="secondary" type="button">HYPER SPIN</button>
+              <button id="turboBtn" type="button">TURBO</button>
               <button id="resetBtn" class="secondary" type="button">리셋</button>
             </div>
+            <div class="result">
+              <div class="result-label">당첨 맵</div>
+              <div class="result-name" id="resultName">-</div>
+              <div class="result-meta" id="resultMeta">룰렛을 돌리면 여기에 결과가 나옵니다.</div>
+            </div>
           </div>
-        </div>
-
-        <div class="result-box">
-          <div class="result-label">당첨 맵</div>
-          <div class="result-name" id="resultName">-</div>
-          <div class="result-meta" id="resultMeta">설정한 구간의 랜덤 맵이 여기에 표시됩니다.</div>
         </div>
       </div>
 
@@ -369,7 +343,9 @@
       {
         id: 'easy',
         label: '이지데몬',
-        meta: '쉬운 쪽의 Extreme Demon 구간',
+        meta: '쉬운 Extreme Demon 구간',
+        endpoint: 'https://easydemonlist.pages.dev/#/',
+        fetcher: 'easy',
         pool: [
           { name: 'Bloodlust', rank: 1 },
           { name: 'Sakupen Circles', rank: 2 },
@@ -382,7 +358,9 @@
       {
         id: 'mid',
         label: '미데',
-        meta: '중간 난이도 Extreme Demon 구간',
+        meta: '중간 Extreme Demon 구간',
+        endpoint: 'https://mediumdemonslist.pages.dev/#/',
+        fetcher: 'medium',
         pool: [
           { name: 'Digital Descent', rank: 24 },
           { name: 'The Golden', rank: 31 },
@@ -396,6 +374,8 @@
         id: 'hard',
         label: '하데',
         meta: '어려운 Extreme Demon 구간',
+        endpoint: 'https://harddemonslist.pages.dev/#/',
+        fetcher: 'hard',
         pool: [
           { name: 'Spectrum Cyclone', rank: 64 },
           { name: 'Kyouki', rank: 71 },
@@ -408,20 +388,25 @@
       {
         id: 'exo',
         label: '익데',
-        meta: 'Extreme Demon 전체 구간',
+        meta: 'Extreme Demon 전체',
+        endpoint: 'https://aredl.net/?showToast=authRequired',
+        fetcher: 'aredl',
         pool: [
           { name: 'Arcturus', rank: 1 },
-          { name: 'Acheron', rank: 52 },
-          { name: 'Kyouki', rank: 71 },
-          { name: 'Spectre', rank: 110 },
-          { name: 'The Hallucination', rank: 148 },
-          { name: 'Tidal Wave', rank: 4 },
+          { name: 'Tidal Wave', rank: 2 },
+          { name: 'Kyouki', rank: 3 },
+          { name: 'Acheron', rank: 4 },
+          { name: 'Tartarus', rank: 5 },
+          { name: 'Bloodlust', rank: 10 },
+          { name: 'the super hotdog', rank: 1497 },
         ],
       },
       {
         id: 'legacy',
         label: '레거시',
         meta: 'AREDL 150등 이하',
+        endpoint: 'https://aredl.net/?showToast=authRequired',
+        fetcher: 'aredl',
         pool: [
           { name: 'Legacy Slot A', rank: 149 },
           { name: 'Legacy Slot B', rank: 143 },
@@ -435,6 +420,8 @@
         id: 'extended',
         label: '익텐',
         meta: 'AREDL 76~150',
+        endpoint: 'https://aredl.net/?showToast=authRequired',
+        fetcher: 'aredl',
         pool: [
           { name: 'Extended Slot A', rank: 76 },
           { name: 'Extended Slot B', rank: 84 },
@@ -448,6 +435,8 @@
         id: 'top10',
         label: 'Top10',
         meta: 'AREDL 1~10',
+        endpoint: 'https://aredl.net/?showToast=authRequired',
+        fetcher: 'aredl',
         pool: [
           { name: 'Arcturus', rank: 1 },
           { name: 'Tidal Wave', rank: 2 },
@@ -461,19 +450,48 @@
 
     const modeButtons = document.getElementById('modeButtons');
     const mapList = document.getElementById('mapList');
-    const bandTrack = document.getElementById('bandTrack');
-    const winnerText = document.getElementById('winnerText');
+    const dropTrack = document.getElementById('dropTrack');
+    const statusText = document.getElementById('statusText');
     const selectedMode = document.getElementById('selectedMode');
     const selectedMeta = document.getElementById('selectedMeta');
     const resultName = document.getElementById('resultName');
     const resultMeta = document.getElementById('resultMeta');
     const spinBtn = document.getElementById('spinBtn');
-    const hardSpinBtn = document.getElementById('hardSpinBtn');
+    const turboBtn = document.getElementById('turboBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const dropWindow = document.getElementById('dropWindow');
 
     let activeMode = modes[0];
     let spinning = false;
-    let spinTimer = null;
+    let trackOffset = 0;
+    let loadedPools = new Map();
+
+    function fallbackPool(mode) {
+      return mode.pool.slice();
+    }
+
+    async function fetchPool(mode) {
+      if (loadedPools.has(mode.id)) return loadedPools.get(mode.id);
+      let pool = null;
+      try {
+        if (mode.fetcher === 'aredl') {
+          const res = await fetch('https://aredl.net/?showToast=authRequired');
+          const text = await res.text();
+          const matches = [...text.matchAll(/#\d+\s*-\s*([^<\n]+)/g)].map(m => ({ name: m[1].trim(), rank: Number(m[0].match(/#(\d+)/)?.[1] || 0) }));
+          if (matches.length) pool = matches.slice(0, 30);
+        } else {
+          const res = await fetch(mode.endpoint);
+          const text = await res.text();
+          const matches = [...text.matchAll(/#\s*(\d+)\s*([A-Za-z0-9'’\-\s().]+)/g)].map(m => ({ name: m[2].trim(), rank: Number(m[1]) }));
+          if (matches.length) pool = matches.slice(0, 30);
+        }
+      } catch {
+        pool = null;
+      }
+      const finalPool = pool && pool.length ? pool : fallbackPool(mode);
+      loadedPools.set(mode.id, finalPool);
+      return finalPool;
+    }
 
     function renderButtons() {
       modeButtons.innerHTML = '';
@@ -481,104 +499,108 @@
         const btn = document.createElement('button');
         btn.className = `chip ${mode.id === activeMode.id ? 'active' : ''}`;
         btn.textContent = mode.label;
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           if (spinning) return;
           activeMode = mode;
-          renderButtons();
-          renderList();
           selectedMode.textContent = mode.label;
           selectedMeta.textContent = mode.meta;
-          resultMeta.textContent = '설정한 구간의 랜덤 맵이 여기에 표시됩니다.';
           resultName.textContent = '-';
-          winnerText.textContent = '버튼을 눌러 룰렛을 돌려보세요.';
+          resultMeta.textContent = '룰렛을 돌리면 여기에 결과가 나옵니다.';
+          statusText.textContent = 'LOADED';
+          renderButtons();
+          await renderList();
+          await buildTrack(mode);
         });
         modeButtons.appendChild(btn);
       });
     }
 
-    function renderList() {
+    async function renderList() {
+      const pool = await fetchPool(activeMode);
       mapList.innerHTML = '';
-      activeMode.pool
-        .slice()
-        .sort((a, b) => a.rank - b.rank)
-        .forEach((item, index) => {
-          const row = document.createElement('div');
-          row.className = 'row';
-          row.innerHTML = `
-            <div class="rank">#${item.rank}</div>
-            <div class="mapname">${item.name}</div>
-            <div class="mode">${index === 0 ? 'main' : activeMode.id}</div>
-          `;
-          mapList.appendChild(row);
-        });
+      pool.slice().sort((a, b) => a.rank - b.rank).forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `
+          <div class="rank">#${item.rank}</div>
+          <div class="mapname">${item.name}</div>
+          <div class="mode">${activeMode.id}</div>
+        `;
+        mapList.appendChild(row);
+      });
     }
 
-    function buildTrack(mode) {
+    async function buildTrack(mode) {
+      const pool = await fetchPool(mode);
       const sequence = [];
-      for (let i = 0; i < 18; i += 1) {
-        sequence.push(mode.pool[i % mode.pool.length]);
+      for (let i = 0; i < 26; i += 1) {
+        sequence.push(pool[i % pool.length]);
       }
-      bandTrack.innerHTML = sequence.map(item => `
-        <div class="map-pill">
+      dropTrack.innerHTML = sequence.map(item => `
+        <div class="map-card">
           ${item.name}
-          <small>#${item.rank} ${mode.label}</small>
+          <small>#${item.rank} · ${mode.label}</small>
         </div>
       `).join('');
-      bandTrack.style.transform = 'translateX(0)';
+      trackOffset = 0;
+      dropTrack.style.transition = 'none';
+      dropTrack.style.transform = 'translateY(0)';
     }
 
-    function spin(multiplier = 1) {
+    async function spin(multiplier = 1) {
       if (spinning) return;
       spinning = true;
       spinBtn.disabled = true;
-      hardSpinBtn.disabled = true;
+      turboBtn.disabled = true;
+      dropWindow.classList.add('spin');
+      statusText.textContent = 'SPINNING';
       resultName.textContent = '-';
-      resultMeta.textContent = '룰렛이 돌아가는 중...';
-      winnerText.textContent = '또로로로록...';
-      winnerText.classList.add('flash');
+      resultMeta.textContent = '룰렛이 아래로 떨어지는 중...';
 
       const mode = activeMode;
-      const choice = mode.pool[Math.floor(Math.random() * mode.pool.length)];
-      const distance = -(1200 + Math.random() * 900 * multiplier);
-      const duration = 2400 + Math.round(700 * multiplier);
+      const pool = await fetchPool(mode);
+      const choice = pool[Math.floor(Math.random() * pool.length)];
+      const duration = 1500 + Math.round(600 * multiplier);
+      const travel = 980 + Math.random() * 540 * multiplier;
+      trackOffset += travel;
 
-      buildTrack(mode);
-      bandTrack.style.transition = 'transform ' + duration + 'ms cubic-bezier(0.12, 0.72, 0.08, 1)';
+      await buildTrack(mode);
+      dropTrack.style.transition = `transform ${duration}ms cubic-bezier(.12,.82,.15,1)`;
       requestAnimationFrame(() => {
-        bandTrack.style.transform = 'translateX(' + distance + 'px)';
+        dropTrack.style.transform = `translateY(${trackOffset}px)`;
       });
 
-      clearTimeout(spinTimer);
-      spinTimer = setTimeout(() => {
+      setTimeout(() => {
         spinning = false;
         spinBtn.disabled = false;
-        hardSpinBtn.disabled = false;
-        winnerText.classList.remove('flash');
-        const clean = mode.pool.find(item => item.name === choice.name) || choice;
-        resultName.textContent = clean.name;
-        resultMeta.textContent = `#${clean.rank} · ${mode.label} · ${mode.meta}`;
-        winnerText.textContent = `당첨 맵: ${clean.name}`;
+        turboBtn.disabled = false;
+        dropWindow.classList.remove('spin');
+        statusText.textContent = 'READY';
+        resultName.textContent = choice.name;
+        resultMeta.textContent = `#${choice.rank} · ${mode.label} · ${mode.meta}`;
       }, duration);
     }
 
-    function reset() {
+    async function reset() {
       if (spinning) return;
+      statusText.textContent = 'READY';
       resultName.textContent = '-';
-      resultMeta.textContent = '설정한 구간의 랜덤 맵이 여기에 표시됩니다.';
-      winnerText.textContent = '버튼을 눌러 룰렛을 돌려보세요.';
-      bandTrack.style.transition = 'none';
-      bandTrack.style.transform = 'translateX(0)';
+      resultMeta.textContent = '룰렛을 돌리면 여기에 결과가 나옵니다.';
+      trackOffset = 0;
+      await buildTrack(activeMode);
     }
 
     spinBtn.addEventListener('click', () => spin(1));
-    hardSpinBtn.addEventListener('click', () => spin(1.7));
+    turboBtn.addEventListener('click', () => spin(1.8));
     resetBtn.addEventListener('click', reset);
 
-    selectedMode.textContent = activeMode.label;
-    selectedMeta.textContent = activeMode.meta;
-    renderButtons();
-    renderList();
-    buildTrack(activeMode);
+    (async () => {
+      selectedMode.textContent = activeMode.label;
+      selectedMeta.textContent = activeMode.meta;
+      renderButtons();
+      await renderList();
+      await buildTrack(activeMode);
+    })();
   </script>
 </body>
 </html>
