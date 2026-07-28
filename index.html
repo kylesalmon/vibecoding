@@ -371,13 +371,12 @@
         endpoint: 'https://aredl.net/?showToast=authRequired',
         fetcher: 'aredl',
         pool: [
-          { name: 'Arcturus', rank: 1 },
-          { name: 'Tidal Wave', rank: 2 },
-          { name: 'Kyouki', rank: 3 },
-          { name: 'Acheron', rank: 4 },
-          { name: 'Tartarus', rank: 5 },
-          { name: 'Bloodlust', rank: 10 },
-          { name: 'the super hotdog', rank: 1497 },
+          { name: 'Arcturus', rank: 1, id: 107344383 },
+          { name: 'Tidal Wave', rank: 2, id: 113111924 },
+          { name: 'Kyouki', rank: 3, id: 107344384 },
+          { name: 'Acheron', rank: 4, id: 103996634 },
+          { name: 'Tartarus', rank: 5, id: 103996630 },
+          { name: 'Bloodlust', rank: 10, id: 105445427 },
         ],
       },
       {
@@ -387,12 +386,12 @@
         endpoint: 'https://aredl.net/?showToast=authRequired',
         fetcher: 'aredl',
         pool: [
-          { name: 'Legacy Slot A', rank: 149 },
-          { name: 'Legacy Slot B', rank: 143 },
-          { name: 'Legacy Slot C', rank: 132 },
-          { name: 'Legacy Slot D', rank: 117 },
-          { name: 'Legacy Slot E', rank: 98 },
-          { name: 'Legacy Slot F', rank: 151 },
+          { name: 'Legacy Slot A', rank: 149, id: 127320494 },
+          { name: 'Legacy Slot B', rank: 143, id: 109730342 },
+          { name: 'Legacy Slot C', rank: 132, id: 109730343 },
+          { name: 'Legacy Slot D', rank: 117, id: 109730344 },
+          { name: 'Legacy Slot E', rank: 98, id: 109730345 },
+          { name: 'Legacy Slot F', rank: 151, id: 109730346 },
         ],
       },
       {
@@ -402,12 +401,12 @@
         endpoint: 'https://aredl.net/?showToast=authRequired',
         fetcher: 'aredl',
         pool: [
-          { name: 'Extended Slot A', rank: 76 },
-          { name: 'Extended Slot B', rank: 84 },
-          { name: 'Extended Slot C', rank: 97 },
-          { name: 'Extended Slot D', rank: 112 },
-          { name: 'Extended Slot E', rank: 129 },
-          { name: 'Extended Slot F', rank: 150 },
+          { name: 'Extended Slot A', rank: 76, id: 127320494 },
+          { name: 'Extended Slot B', rank: 84, id: 127320495 },
+          { name: 'Extended Slot C', rank: 97, id: 127320496 },
+          { name: 'Extended Slot D', rank: 112, id: 127320497 },
+          { name: 'Extended Slot E', rank: 129, id: 127320498 },
+          { name: 'Extended Slot F', rank: 150, id: 127320499 },
         ],
       },
       {
@@ -417,12 +416,12 @@
         endpoint: 'https://aredl.net/?showToast=authRequired',
         fetcher: 'aredl',
         pool: [
-          { name: 'Arcturus', rank: 1 },
-          { name: 'Tidal Wave', rank: 2 },
-          { name: 'Kyouki', rank: 3 },
-          { name: 'Acheron', rank: 4 },
-          { name: 'Tartarus', rank: 5 },
-          { name: 'Bloodlust', rank: 10 },
+          { name: 'Arcturus', rank: 1, id: 107344383 },
+          { name: 'Tidal Wave', rank: 2, id: 113111924 },
+          { name: 'Kyouki', rank: 3, id: 107344384 },
+          { name: 'Acheron', rank: 4, id: 103996634 },
+          { name: 'Tartarus', rank: 5, id: 103996630 },
+          { name: 'Bloodlust', rank: 10, id: 105445427 },
         ],
       },
     ];
@@ -459,8 +458,12 @@
         const res = await fetch(mode.endpoint, { mode: 'cors' });
         const text = await res.text();
         if (mode.fetcher === 'aredl') {
-          const hits = [...text.matchAll(/#\s*(\d+)\s*-\s*([^<\n]+)|#\s*(\d+)\s*([^\n<]+)/g)]
-            .map(m => ({ rank: Number(m[1] || m[3]), name: (m[2] || m[4] || '').trim() }))
+          const hits = [...text.matchAll(/href="\/list\/(\d+)".*?#\s*(\d+)\s*-\s*([^<\n]+)|#\s*(\d+)\s*-\s*([^<\n]+)/gsi)]
+            .map(m => ({
+              id: Number(m[1] || 0),
+              rank: Number(m[2] || m[4] || 0),
+              name: (m[3] || m[5] || '').trim(),
+            }))
             .filter(x => x.rank && x.name);
           if (hits.length) pool = hits;
         } else {
@@ -475,6 +478,22 @@
       const finalPool = pool && pool.length ? pool : fallbackPool(mode);
       loadedPools.set(mode.id, finalPool);
       return finalPool;
+    }
+
+    async function enrichAredlLevel(item) {
+      if (!item.id) return item;
+      try {
+        const res = await fetch(`https://api.aredl.net/v2/api/aredl/levels/${item.id}`, { mode: 'cors' });
+        const data = await res.json();
+        return {
+          ...item,
+          apiName: data?.name || data?.level_name || item.name,
+          apiRank: data?.position || data?.rank || item.rank,
+          apiTier: data?.nlw_tier || data?.tier || null,
+        };
+      } catch {
+        return item;
+      }
     }
 
     function renderButtons() {
@@ -566,6 +585,7 @@
       const mode = activeMode;
       const pool = await fetchPool(mode);
       const choice = pool[Math.floor(Math.random() * pool.length)];
+      const enrichedChoice = mode.fetcher === 'aredl' ? await enrichAredlLevel(choice) : choice;
       const duration = 1100 + Math.round(420 * multiplier);
       const travel = 1180 + Math.random() * 820 * multiplier;
       targetOffset = trackOffset + travel;
@@ -578,8 +598,10 @@
         turboBtn.disabled = false;
         dropWindow.classList.remove('spin');
         statusText.textContent = 'READY';
-        resultName.textContent = choice.name;
-        resultMeta.textContent = `#${choice.rank} · ${mode.label} · ${mode.meta}`;
+        resultName.textContent = enrichedChoice.apiName || enrichedChoice.name;
+        resultMeta.textContent = enrichedChoice.apiTier
+          ? `#${enrichedChoice.apiRank || enrichedChoice.rank} · ${mode.label} · ${mode.meta} · ${enrichedChoice.apiTier}`
+          : `#${enrichedChoice.apiRank || enrichedChoice.rank} · ${mode.label} · ${mode.meta}`;
       }, duration);
     }
 
