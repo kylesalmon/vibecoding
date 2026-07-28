@@ -3,258 +3,582 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>별자리 챗봇</title>
+  <title>Geometry Dash Map Roulette</title>
   <style>
     :root {
-      --primary: #ff385c;
-      --primary-active: #e00b41;
-      --ink: #222222;
-      --body: #3f3f3f;
-      --muted: #6a6a6a;
-      --hairline: #dddddd;
-      --surface-soft: #f7f7f7;
-      --canvas: #ffffff;
-      --shadow: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px, rgba(0, 0, 0, 0.1) 0 4px 8px;
+      --bg: #070b14;
+      --panel: rgba(11, 16, 28, 0.86);
+      --panel-2: rgba(17, 24, 39, 0.95);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --gold: #fbbf24;
+      --pink: #ff385c;
+      --cyan: #38bdf8;
+      --green: #34d399;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: "Airbnb Cereal VF", Circular, -apple-system, system-ui, Roboto, "Helvetica Neue", sans-serif;
-      background: var(--canvas);
-      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 56, 92, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 26%),
+        linear-gradient(160deg, #050816, #0d1324 55%, #070b14);
       padding: 24px;
+      display: grid;
+      place-items: center;
     }
+
     .app {
-      width: min(920px, 100%);
-      margin: 0 auto;
-      border: 1px solid var(--hairline);
-      border-radius: 20px;
+      width: min(1200px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
       box-shadow: var(--shadow);
-      padding: 28px;
-      background: var(--canvas);
+      overflow: hidden;
     }
-    header {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: end;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
+
+    .hero {
+      padding: 28px 28px 18px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(255, 56, 92, 0.12), transparent 35%),
+        linear-gradient(225deg, rgba(56, 189, 248, 0.10), transparent 32%);
     }
+
     h1 {
       margin: 0;
-      font-size: clamp(1.7rem, 4vw, 2.3rem);
-      letter-spacing: -0.02em;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      letter-spacing: -0.04em;
+      line-height: 1;
     }
-    .subtitle, .status, .note {
-      margin: 8px 0 0;
+
+    .subtitle {
+      margin: 10px 0 0;
       color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.95rem;
+      line-height: 1.6;
+      max-width: 840px;
     }
-    .card {
-      border: 1px solid var(--hairline);
-      border-radius: 14px;
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 18px;
       padding: 18px;
-      background: var(--canvas);
     }
+
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+    }
+
     .section-title {
       margin: 0 0 14px;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 700;
+      color: #fff;
     }
-    .fields {
-      display: grid;
-      gap: 12px;
-    }
-    label {
-      display: grid;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-    input[type="date"], input[type="password"] {
-      width: 100%;
-      border: 1px solid var(--hairline);
-      border-radius: 8px;
-      padding: 14px;
-      font-size: 1rem;
-      color: var(--ink);
-      background: var(--canvas);
-      outline: none;
-    }
-    .buttons {
+
+    .controls {
       display: flex;
       flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 9999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      transition: transform 120ms ease, background 120ms ease;
+    }
+
+    .chip:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
+    .chip.active {
+      border-color: rgba(255, 56, 92, 0.55);
+      background: rgba(255, 56, 92, 0.16);
+    }
+
+    .spin-row {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 170px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .display {
+      min-height: 150px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+        rgba(0,0,0,0.24);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+    }
+
+    .display::before,
+    .display::after {
+      content: "";
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251,191,36,0.18), transparent 65%);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+    .display::before { top: -140px; left: -100px; }
+    .display::after { right: -120px; bottom: -160px; background: radial-gradient(circle, rgba(255,56,92,0.18), transparent 65%); }
+
+    .roulette {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 720px);
+      display: grid;
       gap: 12px;
+    }
+
+    .band {
+      height: 86px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03)),
+        rgba(3, 7, 18, 0.78);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .band-track {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      white-space: nowrap;
+      will-change: transform;
+      transform: translateX(0);
+    }
+
+    .map-pill {
+      min-width: 200px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,56,92,0.95), rgba(251,191,36,0.92));
+      color: #111827;
+      font-weight: 800;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.24);
+      text-align: center;
+    }
+
+    .map-pill small {
+      display: block;
+      margin-top: 4px;
+      font-weight: 700;
+      opacity: 0.92;
+    }
+
+    .winner {
+      margin-top: 4px;
+      text-align: center;
+      font-size: 1.1rem;
+      color: var(--muted);
+    }
+
+    .result {
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      padding: 16px;
+    }
+
+    .result-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .result-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.03em;
+    }
+
+    .result-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-top: 14px;
     }
+
     button {
       border: 0;
-      border-radius: 8px;
+      border-radius: 9999px;
       padding: 14px 18px;
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 700;
       cursor: pointer;
-      color: #fff;
-      background: var(--primary);
+      color: #111827;
+      background: linear-gradient(135deg, #fde68a, #f59e0b);
+      box-shadow: 0 12px 26px rgba(245, 158, 11, 0.22);
     }
-    button:hover { background: var(--primary-active); }
+
     button.secondary {
-      color: var(--ink);
-      background: var(--canvas);
-      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
     }
-    .response {
-      margin-top: 14px;
-      min-height: 180px;
-      white-space: pre-wrap;
-      border: 1px solid var(--hairline);
-      border-radius: 14px;
-      padding: 16px;
-      background: var(--surface-soft);
-      color: var(--body);
-      line-height: 1.6;
-    }
-    .log {
-      margin-top: 14px;
+
+    .list {
       display: grid;
+      gap: 8px;
+      max-height: 460px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 88px 1fr 64px;
       gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
     }
-    .log-item {
-      border: 1px solid var(--hairline);
-      border-radius: 14px;
-      background: var(--canvas);
-      padding: 12px 14px;
+
+    .rank {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #fff;
     }
-    .log-label {
-      font-size: 0.85rem;
+
+    .mapname {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .mode {
+      text-align: right;
       color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .log-text {
-      white-space: pre-wrap;
-      color: var(--body);
-    }
-    .warning {
-      margin-top: 10px;
       font-size: 0.85rem;
-      color: var(--muted);
+    }
+
+    .flash {
+      animation: flash 1s ease-in-out infinite;
+    }
+
+    @keyframes flash {
+      0%, 100% { filter: saturate(1); transform: scale(1); }
+      50% { filter: saturate(1.35) brightness(1.08); transform: scale(1.01); }
+    }
+
+    @media (max-width: 940px) {
+      .content { grid-template-columns: 1fr; }
+      .spin-row { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+      .mode { text-align: left; }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <header>
-      <div>
-        <h1>별자리 챗봇</h1>
-        <p class="subtitle">생년월일을 입력하면 별자리에 맞춰 번호를 추천하고, 왜 그 번호를 골랐는지 설명합니다.</p>
+    <section class="hero">
+      <h1>Geometry Dash Map Roulette</h1>
+      <p class="subtitle">
+        AREDL 구간을 기반으로 이지데몬, 미데, 하데, 익데, 레거시, 익텐, Top10 중 하나를 고른 뒤 잭팟처럼 돌아가는 룰렛을 멈춰 맵을 뽑습니다.
+        Legacy는 150등 이하, ExTended는 76~150, Main은 1~75를 뜻합니다.
+      </p>
+    </section>
+
+    <section class="content">
+      <div class="card">
+        <h2 class="section-title">룰렛</h2>
+        <div class="controls" id="modeButtons"></div>
+
+        <div class="spin-row">
+          <div class="display flash" id="display">
+            <div class="roulette">
+              <div class="band">
+                <div class="band-track" id="bandTrack"></div>
+              </div>
+              <div class="winner" id="winnerText">버튼을 눌러 룰렛을 돌려보세요.</div>
+            </div>
+          </div>
+          <div>
+            <div class="result-box">
+              <div class="result-label">선택된 구간</div>
+              <div class="result-name" id="selectedMode">이지데몬</div>
+              <div class="result-meta" id="selectedMeta">AREDL 기준으로 해당 구간의 맵들만 룰렛에 들어갑니다.</div>
+            </div>
+            <div class="button-row">
+              <button id="spinBtn" type="button">SPIN</button>
+              <button id="hardSpinBtn" class="secondary" type="button">HYPER SPIN</button>
+              <button id="resetBtn" class="secondary" type="button">리셋</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-box">
+          <div class="result-label">당첨 맵</div>
+          <div class="result-name" id="resultName">-</div>
+          <div class="result-meta" id="resultMeta">설정한 구간의 랜덤 맵이 여기에 표시됩니다.</div>
+        </div>
       </div>
-      <div class="status" id="status">OpenAI API를 서버에서 호출합니다.</div>
-    </header>
 
-    <section class="card">
-      <h2 class="section-title">입력</h2>
-      <div class="fields">
-        <label>
-          OpenAI API Key
-          <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
-        </label>
-        <label>
-          생년월일
-          <input id="birthDateInput" type="date" />
-        </label>
+      <div class="card">
+        <h2 class="section-title">맵 풀</h2>
+        <div class="list" id="mapList"></div>
       </div>
-
-      <div class="buttons">
-        <button id="askBtn" type="button">번호 추천받기</button>
-        <button id="clearBtn" class="secondary" type="button">기록 지우기</button>
-      </div>
-
-      <div class="warning">이 키는 개발용 편의 기능입니다. 공유 PC에서는 사용하지 않는 것이 안전합니다.</div>
-
-      <div class="response" id="response">생년월일과 API 키를 입력하고 버튼을 눌러주세요.</div>
-      <div class="log" id="log"></div>
     </section>
   </main>
 
   <script>
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const birthDateInput = document.getElementById('birthDateInput');
-    const askBtn = document.getElementById('askBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const responseEl = document.getElementById('response');
-    const logEl = document.getElementById('log');
-    const statusEl = document.getElementById('status');
-    const API_BASE = 'http://localhost:3000';
+    const modes = [
+      {
+        id: 'easy',
+        label: '이지데몬',
+        meta: '쉬운 쪽의 Extreme Demon 구간',
+        pool: [
+          { name: 'Bloodlust', rank: 1 },
+          { name: 'Sakupen Circles', rank: 2 },
+          { name: 'Kocmoc', rank: 5 },
+          { name: 'Avernus', rank: 8 },
+          { name: 'Firework', rank: 12 },
+          { name: 'Slaughterhouse', rank: 15 },
+        ],
+      },
+      {
+        id: 'mid',
+        label: '미데',
+        meta: '중간 난이도 Extreme Demon 구간',
+        pool: [
+          { name: 'Digital Descent', rank: 24 },
+          { name: 'The Golden', rank: 31 },
+          { name: 'Tartarus', rank: 39 },
+          { name: 'Edge of Destiny', rank: 47 },
+          { name: 'Acheron', rank: 52 },
+          { name: 'Acu', rank: 58 },
+        ],
+      },
+      {
+        id: 'hard',
+        label: '하데',
+        meta: '어려운 Extreme Demon 구간',
+        pool: [
+          { name: 'Spectrum Cyclone', rank: 64 },
+          { name: 'Kyouki', rank: 71 },
+          { name: 'Athanatos', rank: 88 },
+          { name: 'Nhelv', rank: 102 },
+          { name: 'Cognition', rank: 121 },
+          { name: 'Rust', rank: 138 },
+        ],
+      },
+      {
+        id: 'exo',
+        label: '익데',
+        meta: 'Extreme Demon 전체 구간',
+        pool: [
+          { name: 'Arcturus', rank: 1 },
+          { name: 'Acheron', rank: 52 },
+          { name: 'Kyouki', rank: 71 },
+          { name: 'Spectre', rank: 110 },
+          { name: 'The Hallucination', rank: 148 },
+          { name: 'Tidal Wave', rank: 4 },
+        ],
+      },
+      {
+        id: 'legacy',
+        label: '레거시',
+        meta: 'AREDL 150등 이하',
+        pool: [
+          { name: 'Legacy Slot A', rank: 149 },
+          { name: 'Legacy Slot B', rank: 143 },
+          { name: 'Legacy Slot C', rank: 132 },
+          { name: 'Legacy Slot D', rank: 117 },
+          { name: 'Legacy Slot E', rank: 98 },
+          { name: 'Legacy Slot F', rank: 151 },
+        ],
+      },
+      {
+        id: 'extended',
+        label: '익텐',
+        meta: 'AREDL 76~150',
+        pool: [
+          { name: 'Extended Slot A', rank: 76 },
+          { name: 'Extended Slot B', rank: 84 },
+          { name: 'Extended Slot C', rank: 97 },
+          { name: 'Extended Slot D', rank: 112 },
+          { name: 'Extended Slot E', rank: 129 },
+          { name: 'Extended Slot F', rank: 150 },
+        ],
+      },
+      {
+        id: 'top10',
+        label: 'Top10',
+        meta: 'AREDL 1~10',
+        pool: [
+          { name: 'Arcturus', rank: 1 },
+          { name: 'Tidal Wave', rank: 2 },
+          { name: 'Kyouki', rank: 3 },
+          { name: 'Acheron', rank: 4 },
+          { name: 'Tartarus', rank: 5 },
+          { name: 'Bloodlust', rank: 10 },
+        ],
+      },
+    ];
 
-    const savedKey = localStorage.getItem('openai_api_key');
-    if (savedKey) apiKeyInput.value = savedKey;
+    const modeButtons = document.getElementById('modeButtons');
+    const mapList = document.getElementById('mapList');
+    const bandTrack = document.getElementById('bandTrack');
+    const winnerText = document.getElementById('winnerText');
+    const selectedMode = document.getElementById('selectedMode');
+    const selectedMeta = document.getElementById('selectedMeta');
+    const resultName = document.getElementById('resultName');
+    const resultMeta = document.getElementById('resultMeta');
+    const spinBtn = document.getElementById('spinBtn');
+    const hardSpinBtn = document.getElementById('hardSpinBtn');
+    const resetBtn = document.getElementById('resetBtn');
 
-    function addLog(date, text) {
-      const item = document.createElement('div');
-      item.className = 'log-item';
-      item.innerHTML = `<div class="log-label">${date}</div><div class="log-text">${text}</div>`;
-      logEl.prepend(item);
-    }
+    let activeMode = modes[0];
+    let spinning = false;
+    let spinTimer = null;
 
-    async function ask() {
-      const birthDate = birthDateInput.value;
-      const apiKey = apiKeyInput.value.trim();
-
-      if (!apiKey) {
-        responseEl.textContent = 'OpenAI API Key를 먼저 입력해 주세요.';
-        return;
-      }
-      if (!birthDate) {
-        responseEl.textContent = '생년월일을 먼저 입력해 주세요.';
-        return;
-      }
-
-      localStorage.setItem('openai_api_key', apiKey);
-      askBtn.disabled = true;
-      statusEl.textContent = '추천 번호를 계산 중입니다...';
-      responseEl.textContent = '서버에 요청하는 중...';
-
-      try {
-        const res = await fetch(`${API_BASE}/api/draw`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ birthDate, apiKey }),
+    function renderButtons() {
+      modeButtons.innerHTML = '';
+      modes.forEach(mode => {
+        const btn = document.createElement('button');
+        btn.className = `chip ${mode.id === activeMode.id ? 'active' : ''}`;
+        btn.textContent = mode.label;
+        btn.addEventListener('click', () => {
+          if (spinning) return;
+          activeMode = mode;
+          renderButtons();
+          renderList();
+          selectedMode.textContent = mode.label;
+          selectedMeta.textContent = mode.meta;
+          resultMeta.textContent = '설정한 구간의 랜덤 맵이 여기에 표시됩니다.';
+          resultName.textContent = '-';
+          winnerText.textContent = '버튼을 눌러 룰렛을 돌려보세요.';
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '요청 실패');
-        if (!Array.isArray(data.numbers) || data.numbers.length !== 6 || typeof data.bonus !== 'number') {
-          throw new Error('서버 응답 형식이 올바르지 않습니다.');
-        }
+        modeButtons.appendChild(btn);
+      });
+    }
 
-        const text =
-          `별자리: ${data.zodiacKr}\n` +
-          `추천 번호: ${data.numbers.join(', ')}\n` +
-          `보너스: ${data.bonus}\n\n` +
-          `이유:\n${data.explanation}`;
+    function renderList() {
+      mapList.innerHTML = '';
+      activeMode.pool
+        .slice()
+        .sort((a, b) => a.rank - b.rank)
+        .forEach((item, index) => {
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div class="rank">#${item.rank}</div>
+            <div class="mapname">${item.name}</div>
+            <div class="mode">${index === 0 ? 'main' : activeMode.id}</div>
+          `;
+          mapList.appendChild(row);
+        });
+    }
 
-        responseEl.textContent = text;
-        addLog(birthDate, text);
-        statusEl.textContent = data.mode === 'openai'
-          ? 'OpenAI 응답을 받았습니다.'
-          : '로컬 fallback으로 응답했습니다.';
-      } catch (err) {
-        responseEl.textContent = `오류: ${err.message}\n\n서버가 꺼져 있거나, index.html을 직접 열었거나, 포트 3000에 접속이 안 된 상태일 수 있습니다.`;
-        statusEl.textContent = '요청에 실패했습니다.';
-      } finally {
-        askBtn.disabled = false;
+    function buildTrack(mode) {
+      const sequence = [];
+      for (let i = 0; i < 18; i += 1) {
+        sequence.push(mode.pool[i % mode.pool.length]);
       }
+      bandTrack.innerHTML = sequence.map(item => `
+        <div class="map-pill">
+          ${item.name}
+          <small>#${item.rank} ${mode.label}</small>
+        </div>
+      `).join('');
+      bandTrack.style.transform = 'translateX(0)';
     }
 
-    function clearLog() {
-      logEl.innerHTML = '';
-      responseEl.textContent = '기록을 지웠습니다. 다시 입력해 주세요.';
+    function spin(multiplier = 1) {
+      if (spinning) return;
+      spinning = true;
+      spinBtn.disabled = true;
+      hardSpinBtn.disabled = true;
+      resultName.textContent = '-';
+      resultMeta.textContent = '룰렛이 돌아가는 중...';
+      winnerText.textContent = '또로로로록...';
+      winnerText.classList.add('flash');
+
+      const mode = activeMode;
+      const choice = mode.pool[Math.floor(Math.random() * mode.pool.length)];
+      const distance = -(1200 + Math.random() * 900 * multiplier);
+      const duration = 2400 + Math.round(700 * multiplier);
+
+      buildTrack(mode);
+      bandTrack.style.transition = 'transform ' + duration + 'ms cubic-bezier(0.12, 0.72, 0.08, 1)';
+      requestAnimationFrame(() => {
+        bandTrack.style.transform = 'translateX(' + distance + 'px)';
+      });
+
+      clearTimeout(spinTimer);
+      spinTimer = setTimeout(() => {
+        spinning = false;
+        spinBtn.disabled = false;
+        hardSpinBtn.disabled = false;
+        winnerText.classList.remove('flash');
+        const clean = mode.pool.find(item => item.name === choice.name) || choice;
+        resultName.textContent = clean.name;
+        resultMeta.textContent = `#${clean.rank} · ${mode.label} · ${mode.meta}`;
+        winnerText.textContent = `당첨 맵: ${clean.name}`;
+      }, duration);
     }
 
-    askBtn.addEventListener('click', ask);
-    clearBtn.addEventListener('click', clearLog);
+    function reset() {
+      if (spinning) return;
+      resultName.textContent = '-';
+      resultMeta.textContent = '설정한 구간의 랜덤 맵이 여기에 표시됩니다.';
+      winnerText.textContent = '버튼을 눌러 룰렛을 돌려보세요.';
+      bandTrack.style.transition = 'none';
+      bandTrack.style.transform = 'translateX(0)';
+    }
+
+    spinBtn.addEventListener('click', () => spin(1));
+    hardSpinBtn.addEventListener('click', () => spin(1.7));
+    resetBtn.addEventListener('click', reset);
+
+    selectedMode.textContent = activeMode.label;
+    selectedMeta.textContent = activeMode.meta;
+    renderButtons();
+    renderList();
+    buildTrack(activeMode);
   </script>
 </body>
 </html>
