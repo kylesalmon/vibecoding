@@ -15,6 +15,7 @@
 <title>GD 맵 룰렛 — 잭팟 스핀</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://levelthumbs.prevter.me" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <style>
   :root{
@@ -66,11 +67,12 @@
   h1{font-family:var(--disp);font-size:clamp(1.5rem,4vw,2.3rem);margin:0;letter-spacing:.01em;line-height:1.05}
   h1 .hl{color:var(--gold);text-shadow:0 0 18px rgba(255,201,49,.5)}
   .tagline{color:var(--muted);font-size:.9rem;margin-top:4px}
-  .src-note{color:var(--muted);font-size:.8rem;text-align:right}
+  .src-note{color:var(--muted);font-size:.8rem;text-align:right;line-height:1.7}
   .src-note a{color:var(--cyan);text-decoration:none}
+  .src-note a:hover{text-decoration:underline}
 
   /* ── layout ── */
-  .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px}
+  .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px;align-items:start}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}
 
   /* ── mode chips ── */
@@ -127,7 +129,7 @@
   }
   .slot.rolling .centerline{border-color:rgba(255,201,49,.9);box-shadow:0 0 26px rgba(255,201,49,.28)}
 
-  /* ── side panel ── */
+  /* ── control panel ── */
   .side{display:flex;flex-direction:column;gap:10px}
   .status{
     border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:12px 14px;
@@ -154,21 +156,92 @@
     background:var(--panel2);border:1px solid var(--line);box-shadow:none;padding:11px;
   }
   .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-
-  .win{
-    border:1px solid rgba(255,201,49,.4);border-radius:14px;padding:14px;flex:1;
-    background:linear-gradient(160deg, rgba(255,201,49,.08), rgba(255,46,136,.05));
+  .hintbox{
+    margin-top:auto;border:1px dashed var(--line);border-radius:12px;padding:10px 12px;
+    color:var(--muted);font-size:.76rem;line-height:1.6;
   }
-  .win .lb{font-size:.74rem;color:var(--muted);letter-spacing:.08em;font-weight:700}
-  .win .nm{font-family:var(--disp);font-size:1.4rem;margin-top:4px;word-break:break-all;color:var(--gold)}
-  .win .mt{color:var(--muted);font-size:.85rem;margin-top:6px;line-height:1.55}
-  .win a{color:var(--cyan);text-decoration:none}
+  .hintbox kbd{
+    font-family:var(--disp);font-size:.7rem;color:var(--gold);
+    border:1px solid rgba(255,201,49,.35);border-radius:5px;padding:1px 5px;
+  }
 
-  /* ── pool list ── */
+  /* ── 결과 스테이지 (오른쪽 주인공) ── */
+  .stage{
+    position:relative;overflow:hidden;border-radius:18px;
+    min-height:330px;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:22px;border:1px solid rgba(255,201,49,.32);
+    background:linear-gradient(160deg,#11163a,#0a0d21 70%);
+  }
+  .stage .thumb{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    opacity:0;transform:scale(1.12);
+    transition:opacity .7s ease;
+  }
+  .stage.has-thumb .thumb{opacity:.62;animation:drift 18s ease-out forwards}
+  @keyframes drift{from{transform:scale(1.12)}to{transform:scale(1)}}
+  .stage .veil{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(0deg, rgba(7,9,26,.96) 6%, rgba(7,9,26,.72) 38%, rgba(7,9,26,.28) 100%),
+      radial-gradient(130% 90% at 50% 130%, rgba(255,46,136,.22), transparent 62%);
+  }
+  .stage .in{position:relative;z-index:2}
+  .stage .lb{
+    font-size:.72rem;color:var(--gold);letter-spacing:.16em;font-weight:700;
+    text-transform:uppercase;
+  }
+  .stage-rank{
+    display:inline-block;margin:8px 0 6px;font-family:var(--disp);font-size:.88rem;
+    color:#1a1206;border-radius:999px;padding:3px 13px;
+    background:linear-gradient(135deg,#ffe08a,var(--gold));
+    box-shadow:0 0 18px rgba(255,201,49,.4);
+  }
+  .stage-rank:empty{display:none}
+  .stage-name{
+    font-family:var(--disp);line-height:1.06;word-break:break-word;
+    font-size:clamp(1.75rem,4.6vw,3.05rem);
+    text-shadow:0 3px 22px rgba(0,0,0,.85), 0 0 44px rgba(255,201,49,.3);
+  }
+  .stage-meta{color:#c6cbe6;font-size:.86rem;margin-top:10px;line-height:1.7}
+  .stage-meta a{color:var(--cyan);text-decoration:none}
+  .stage-meta a:hover{text-decoration:underline}
+  .thumb-note{
+    position:absolute;top:14px;right:16px;z-index:2;
+    font-size:.68rem;color:var(--muted);letter-spacing:.05em;
+  }
+  .stage.reveal .in{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+
+  /* ── 리스트 배너 + 서랍 ── */
+  .banner{
+    width:100%;margin-top:14px;display:flex;align-items:center;gap:13px;text-align:left;
+    padding:15px 17px;border-radius:16px;cursor:pointer;color:var(--text);
+    font-family:var(--body);
+    border:1px solid var(--line);
+    background:linear-gradient(100deg, rgba(255,46,136,.2), rgba(124,58,237,.16) 55%, rgba(34,211,238,.16));
+    transition:transform .1s, border-color .18s, box-shadow .18s;
+  }
+  .banner:hover{transform:translateY(-1px);border-color:rgba(255,201,49,.55);box-shadow:0 0 24px rgba(255,201,49,.16)}
+  .banner:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .banner .ico{
+    width:38px;height:38px;flex:none;border-radius:10px;display:grid;place-items:center;
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);font-size:1.1rem;
+  }
+  .banner .txt{min-width:0}
+  .banner b{font-family:var(--disp);font-size:1rem;display:block;letter-spacing:.02em}
+  .banner small{color:#b9c0e0;font-size:.78rem;display:block;margin-top:1px}
+  .banner .arrow{margin-left:auto;color:var(--gold);font-size:1rem;transition:transform .3s}
+  .banner.open .arrow{transform:rotate(180deg)}
+
+  .drawer{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s ease, opacity .25s ease;opacity:0}
+  .drawer.open{grid-template-rows:1fr;opacity:1}
+  .drawer > .inner{overflow:hidden;min-height:0}
+  .drawer.open > .inner{padding-top:14px}
+
   .pool-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
-  .pool-head h2{font-family:var(--disp);font-size:1rem;margin:0;letter-spacing:.03em}
+  .pool-head h2{font-family:var(--disp);font-size:.95rem;margin:0;letter-spacing:.03em}
   .pool-head .cnt{color:var(--muted);font-size:.82rem}
-  .list{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow:auto;padding-right:6px}
+  .list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto;padding-right:6px}
   .list::-webkit-scrollbar{width:8px}
   .list::-webkit-scrollbar-thumb{background:var(--panel2);border-radius:8px}
   .row{
@@ -179,14 +252,22 @@
   .row .nm{font-weight:500;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .empty{color:var(--muted);text-align:center;padding:32px 0;font-size:.9rem}
 
+  .credit{color:var(--muted);font-size:.72rem;margin-top:12px;text-align:right}
+  .credit a{color:var(--cyan);text-decoration:none}
+
   @media (max-width:920px){
     .grid,.machine{grid-template-columns:1fr}
     :root{--winH:380px}
-    .list{max-height:340px}
+    .list{max-height:320px}
     .src-note{text-align:left}
+    .stage{min-height:260px}
+    .hintbox{margin-top:0}
   }
   @media (prefers-reduced-motion:reduce){
     .mcard.winner{animation:none}
+    .stage.has-thumb .thumb{animation:none;transform:none}
+    .stage.reveal .in{animation:none}
+    .drawer{transition:none}
   }
 </style>
 </head>
@@ -210,6 +291,7 @@
   </header>
 
   <div class="grid">
+    <!-- ── 왼쪽: 릴 + 조작부 ── -->
     <section class="card">
       <div class="chips" id="chips" role="tablist" aria-label="난이도 구간"></div>
 
@@ -230,21 +312,48 @@
           <button class="btn" id="spinBtn" type="button">SPIN</button>
           <button class="btn ghost" id="turboBtn" type="button">터보 스핀 (짧게)</button>
           <button class="btn ghost" id="soundBtn" type="button">🔊 사운드 켜짐</button>
-          <div class="win">
-            <div class="lb">당첨 맵</div>
-            <div class="nm" id="winName">—</div>
-            <div class="mt" id="winMeta">SPIN을 누르면 결과가 여기에 표시됩니다.</div>
+          <div class="hintbox">
+            도는 중에 <kbd>SPIN</kbd>을 또 누르면 부스트.<br>
+            <kbd>Space</kbd> 로도 돌릴 수 있습니다.
           </div>
         </div>
       </div>
     </section>
 
+    <!-- ── 오른쪽: 결과 스테이지 + 리스트 배너 ── -->
     <section class="card">
-      <div class="pool-head">
-        <h2 id="poolTitle">맵 풀</h2>
-        <span class="cnt" id="poolCount"></span>
+      <div class="stage" id="stage" aria-live="polite">
+        <img class="thumb" id="thumbImg" alt="" aria-hidden="true" />
+        <div class="veil" aria-hidden="true"></div>
+        <div class="thumb-note" id="thumbNote"></div>
+        <div class="in">
+          <div class="lb">당첨 맵</div>
+          <div class="stage-rank" id="winRank"></div>
+          <div class="stage-name" id="winName">SPIN 대기 중</div>
+          <div class="stage-meta" id="winMeta">왼쪽에서 구간을 고르고 SPIN을 누르세요.</div>
+        </div>
       </div>
-      <div class="list" id="poolList"><div class="empty">데이터를 불러오는 중…</div></div>
+
+      <button class="banner" id="listBanner" type="button" aria-expanded="false" aria-controls="drawer">
+        <span class="ico" aria-hidden="true">📜</span>
+        <span class="txt">
+          <b id="bnrTitle">데몬 리스트</b>
+          <small id="bnrSub">탭하면 이번 구간의 전체 맵이 펼쳐집니다</small>
+        </span>
+        <span class="arrow" aria-hidden="true">▼</span>
+      </button>
+
+      <div class="drawer" id="drawer">
+        <div class="inner">
+          <div class="pool-head">
+            <h2 id="poolTitle">맵 풀</h2>
+            <span class="cnt" id="poolCount"></span>
+          </div>
+          <div class="list" id="poolList"><div class="empty">데이터를 불러오는 중…</div></div>
+        </div>
+      </div>
+
+      <div class="credit">썸네일 제공: <a href="https://levelthumbs.prevter.me" target="_blank" rel="noopener">Level Thumbnails</a></div>
     </section>
   </div>
 </div>
@@ -253,12 +362,16 @@
 /* ────────────────────────────────────────────────
    데이터 소스
    - AREDL API v2 : 익데(메인 1~75) / 익텐(76~150) / 레거시(150+) / Top10
-   - TSL형 리스트 : 이지데몬 / 미데 / 하데 / 인데 (pages.dev 사이트의 data/_list.json)
+   - TSL형 리스트 : 이지데몬 / 미데 / 하데 (pages.dev 사이트의 data/_list.json)
+   - IDL 공식 API : 인데
    - 전부 실패하면 내장 예비 풀로 자동 전환 (순위 표기는 부정확할 수 있음)
+   - 썸네일       : Level Thumbnails (levelthumbs.prevter.me)
 ──────────────────────────────────────────────── */
 
 const AREDL_API = 'https://api.aredl.net/v2/api/aredl/levels';
 const SAVE_API = `${location.origin}/api/recommendations`;
+const THUMB_BASE = 'https://levelthumbs.prevter.me';
+const GDBROWSER_SEARCH = 'https://gdbrowser.com/api/search';
 
 const FALLBACK = {
   easy:   ['The Lightning Road','xo','B','Platinum Adventure','Speed Racer','Buck Force','Extinction','Dance Massacre'],
@@ -289,7 +402,9 @@ const els = {
   chips:$('chips'), slot:$('slot'), track:$('track'),
   stMode:$('stMode'), stBadge:$('stBadge'),
   spin:$('spinBtn'), turbo:$('turboBtn'), sound:$('soundBtn'),
-  winName:$('winName'), winMeta:$('winMeta'),
+  stage:$('stage'), thumbImg:$('thumbImg'), thumbNote:$('thumbNote'),
+  winName:$('winName'), winRank:$('winRank'), winMeta:$('winMeta'),
+  banner:$('listBanner'), bnrTitle:$('bnrTitle'), bnrSub:$('bnrSub'), drawer:$('drawer'),
   poolTitle:$('poolTitle'), poolCount:$('poolCount'), poolList:$('poolList'),
 };
 let active = MODES[0];
@@ -298,6 +413,8 @@ let soundOn = true;
 let aredlCache = null;              // 정규화된 AREDL 전체 목록
 const tslCache = new Map();         // modeId -> {pool, live, base}
 const poolCache = new Map();        // modeId -> {pool, live}
+const idLookupCache = new Map();    // 맵 이름 -> 레벨 ID (또는 null)
+let thumbToken = 0;                 // 늦게 도착한 썸네일이 새 결과를 덮어쓰지 않게
 const sessionId = localStorage.getItem('gd_roulette_session_id') || crypto.randomUUID();
 localStorage.setItem('gd_roulette_session_id', sessionId);
 
@@ -332,7 +449,7 @@ async function loadAredl(){
   return norm;
 }
 
-/* ── TSL형 리스트 로딩 (EDL/MDL/HDL/IDL) ── */
+/* ── TSL형 리스트 로딩 (EDL/MDL/HDL) ── */
 async function loadTsl(mode){
   if(tslCache.has(mode.id)) return tslCache.get(mode.id);
   for(const base of mode.bases){
@@ -366,6 +483,7 @@ async function loadIdl(mode){
     .map(x => ({
       name: x.name,
       rank: x.position,
+      levelId: x.levelID ?? x.level_id ?? x.levelId ?? null,
       publisher: x.publisher || null,
       yt: x.ytcode || null,
     }))
@@ -405,6 +523,56 @@ async function getPool(mode){
   }
   poolCache.set(mode.id, out);
   return out;
+}
+
+/* ────────────────────────────────────────────────
+   썸네일 (Level Thumbnails)
+   - /thumbnail/{levelID}          → 원본 화질
+   - /thumbnail/{levelID}/medium   → 중간
+   - /thumbnail/{levelID}/small    → 작게
+   레벨 ID가 없으면 GDBrowser 검색으로 한 번 추정해 본다.
+──────────────────────────────────────────────── */
+const thumbUrl = (id, q) => q ? `${THUMB_BASE}/thumbnail/${id}/${q}` : `${THUMB_BASE}/thumbnail/${id}`;
+
+async function lookupLevelId(name){
+  if(!name) return null;
+  if(idLookupCache.has(name)) return idLookupCache.get(name);
+  let id = null;
+  try{
+    const r = await fetchJSON(`${GDBROWSER_SEARCH}/${encodeURIComponent(name)}?count=1`, 6000);
+    const first = Array.isArray(r) ? r[0] : null;
+    if(first && first.id) id = String(first.id);
+  }catch(e){ /* 검색 실패는 조용히 무시 */ }
+  idLookupCache.set(name, id);
+  return id;
+}
+
+function clearThumb(note=''){
+  thumbToken++;
+  els.stage.classList.remove('has-thumb');
+  els.thumbImg.removeAttribute('src');
+  els.thumbNote.textContent = note;
+}
+
+function paintThumb(levelId){
+  const token = ++thumbToken;
+  els.stage.classList.remove('has-thumb');
+  els.thumbImg.removeAttribute('src');
+  if(!levelId){ els.thumbNote.textContent = '썸네일 없음'; return; }
+  els.thumbNote.textContent = '썸네일 불러오는 중…';
+  const url = thumbUrl(levelId);
+  const probe = new Image();
+  probe.onload = () => {
+    if(token !== thumbToken) return;
+    els.thumbImg.src = url;
+    els.stage.classList.add('has-thumb');
+    els.thumbNote.textContent = '';
+  };
+  probe.onerror = () => {
+    if(token !== thumbToken) return;
+    els.thumbNote.textContent = '썸네일 없음';
+  };
+  probe.src = url;
 }
 
 /* ── 사운드 (WebAudio, 파일 없음) ── */
@@ -460,6 +628,28 @@ function renderPoolList(pool){
   els.poolList.appendChild(frag);
 }
 
+function setBanner(mode, count){
+  els.bnrTitle.textContent = `${mode.label} 데몬 리스트`;
+  const open = els.drawer.classList.contains('open');
+  if(count == null){
+    els.bnrSub.textContent = '맵 목록 불러오는 중…';
+  } else {
+    els.bnrSub.textContent = open
+      ? `${mode.hint} · ${count}개 — 탭하면 접힙니다`
+      : `${mode.hint} · ${count}개 — 탭해서 펼치기`;
+  }
+}
+
+function toggleDrawer(force){
+  const open = force !== undefined ? force : !els.drawer.classList.contains('open');
+  els.drawer.classList.toggle('open', open);
+  els.banner.classList.toggle('open', open);
+  els.banner.setAttribute('aria-expanded', String(open));
+  const count = els.poolCount.textContent.replace('개','').trim();
+  setBanner(active, count ? Number(count) : null);
+  beep(open ? 660 : 440, .06, .04, 'triangle');
+}
+
 function cardHTML(item){
   const d = document.createElement('div');
   d.className = 'mcard';
@@ -483,21 +673,21 @@ async function selectMode(m){
   els.stMode.textContent = `${m.label} · ${m.hint}`;
   setBadge('loading');
   els.poolTitle.textContent = `${m.label} 맵 풀`;
-  els.winName.textContent = '—';
-  els.winMeta.textContent = 'SPIN을 누르면 결과가 여기에 표시됩니다.';
+  setBanner(m, null);
+  els.winRank.textContent = '';
+  els.winName.textContent = 'SPIN 대기 중';
+  els.winMeta.textContent = `${m.label} 구간이 장전됐습니다. SPIN을 누르세요.`;
+  clearThumb();
   const { pool, live } = await getPool(m);
   if(active.id !== m.id) return; // 로딩 중 다른 모드로 이동
   setBadge(live?'live':'fb', pool.length);
   renderPoolList(pool);
+  setBanner(m, pool.length);
   idleTrack(pool);
 }
 
 /* ────────────────────────────────────────────────
    스핀 (물리 기반)
-   - SPIN 시작 → 속도가 마찰로 줄어들며 릴이 감속
-   - 도는 중에 SPIN을 또 누르면 속도가 다시 붙음 (부스트)
-   - 속도가 거의 0이 되면 가장 가까운 카드에 스냅 → 그 카드가 당첨
-   - 카드 시퀀스는 같은 맵이 직전/전전 카드와 겹치지 않게 생성
 ──────────────────────────────────────────────── */
 function shuffled(arr){
   const a = arr.slice();
@@ -618,21 +808,36 @@ async function finish(n){
     }catch(e){}
   }
 
+  // 이름·순위는 즉시 크게 띄운다
+  els.winRank.textContent = winner.rank ? `#${winner.rank}` : '';
   els.winName.textContent = detailName;
+  els.stage.classList.remove('reveal');
+  void els.stage.offsetWidth;          // 애니메이션 재시작
+  els.stage.classList.add('reveal');
+  els.winMeta.textContent = `${active.label} (${active.hint})`;
+  els.thumbNote.textContent = '썸네일 찾는 중…';
+
+  els.slot.classList.remove('rolling');
+  reel.rolling = false;
+  setRollingUI(false);
+
+  // 레벨 ID가 없으면 이름으로 한 번 추정
+  let guessed = false;
+  if(!levelId){
+    const found = await lookupLevelId(detailName);
+    if(found){ levelId = found; guessed = true; }
+  }
+
   const bits = [];
-  if(winner.rank) bits.push(`#${winner.rank}`);
   bits.push(`${active.label} (${active.hint})`);
   if(winner.publisher) bits.push(`by ${winner.publisher}`);
-  if(levelId) bits.push(`레벨 ID <a href="https://gdbrowser.com/${levelId}" target="_blank" rel="noopener">${levelId}</a>`);
+  if(levelId) bits.push(`레벨 ID <a href="https://gdbrowser.com/${levelId}" target="_blank" rel="noopener">${levelId}</a>${guessed ? ' (이름 검색)' : ''}`);
   if(winner.yt) bits.push(`<a href="https://youtu.be/${winner.yt}" target="_blank" rel="noopener">영상 보기</a>`);
   els.winMeta.innerHTML = bits.join(' · ');
 
-  els.slot.classList.remove('rolling');
-  saveRecommendation({
-    map_name: detailName,
-  }).catch(() => {});
-  reel.rolling = false;
-  setRollingUI(false);
+  paintThumb(levelId);
+
+  saveRecommendation({ map_name: detailName }).catch(() => {});
 }
 
 async function saveRecommendation(payload){
@@ -680,8 +885,11 @@ async function spin(turbo=false){
 
   els.slot.classList.add('rolling');
   setRollingUI(true);
-  els.winName.textContent = '…';
-  els.winMeta.textContent = '릴 회전 중… SPIN을 또 누르면 부스트!';
+  els.stage.classList.remove('reveal');
+  els.winRank.textContent = '';
+  els.winName.textContent = '릴 회전 중…';
+  els.winMeta.textContent = 'SPIN을 또 누르면 부스트!';
+  clearThumb();
 
   while(reel.items.length < centerIndex() + 14) appendCard();
   reel.lastT = performance.now();
@@ -694,6 +902,13 @@ els.turbo.addEventListener('click', ()=>spin(true));
 els.sound.addEventListener('click', ()=>{
   soundOn = !soundOn;
   els.sound.textContent = soundOn ? '🔊 사운드 켜짐' : '🔇 사운드 꺼짐';
+});
+els.banner.addEventListener('click', ()=>toggleDrawer());
+document.addEventListener('keydown', e=>{
+  if(e.code === 'Space' && !/^(INPUT|TEXTAREA|BUTTON)$/.test(document.activeElement.tagName)){
+    e.preventDefault();
+    spin(false);
+  }
 });
 
 /* ── 시작 ── */
