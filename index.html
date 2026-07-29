@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q891PP52YS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-Q891PP52YS');
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GD 맵 룰렛 — 잭팟 스핀</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://levelthumbs.prevter.me" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <style>
   :root{
@@ -23,6 +33,10 @@
     --winH:468px;
     --disp:'Russo One',system-ui,sans-serif;
     --body:'Noto Sans KR',system-ui,sans-serif;
+
+    /* 결과 배경 썸네일 세기 — 이 두 값만 만지면 됩니다 */
+    --thumb-op:.95;      /* 이미지 불투명도: 1에 가까울수록 진함 */
+    --veil-top:.10;      /* 위쪽 어둡기: 낮을수록 이미지가 잘 보임 */
   }
   *{box-sizing:border-box}
   html,body{margin:0}
@@ -57,12 +71,49 @@
   h1{font-family:var(--disp);font-size:clamp(1.5rem,4vw,2.3rem);margin:0;letter-spacing:.01em;line-height:1.05}
   h1 .hl{color:var(--gold);text-shadow:0 0 18px rgba(255,201,49,.5)}
   .tagline{color:var(--muted);font-size:.9rem;margin-top:4px}
-  .src-note{color:var(--muted);font-size:.8rem;text-align:right}
+  .src-note{color:var(--muted);font-size:.8rem;text-align:right;line-height:1.7}
   .src-note a{color:var(--cyan);text-decoration:none}
+  .src-note a:hover{text-decoration:underline}
+
+  /* ── 상단 모드 메뉴 (네이버 카페 스타일) ── */
+  .modebar{
+    display:flex;gap:6px;margin-bottom:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px;
+  }
+  .mtab{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+    font-family:var(--body);font-weight:800;font-size:.98rem;color:var(--muted);
+    background:transparent;border:0;border-radius:12px;padding:12px 10px;cursor:pointer;
+    transition:color .15s, background .15s, box-shadow .15s;
+  }
+  .mtab:hover{color:var(--text)}
+  .mtab:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .mtab.active{
+    color:#1a1206;
+    background:linear-gradient(135deg,#ffe08a,var(--gold) 55%,#ff9d1f);
+    box-shadow:0 6px 18px rgba(255,157,31,.28), inset 0 2px 0 rgba(255,255,255,.5);
+  }
+  .mtab-dot{
+    font-size:.66rem;font-weight:900;border-radius:999px;padding:2px 8px;
+    background:rgba(255,46,136,.2);color:var(--magenta);border:1px solid rgba(255,46,136,.5);
+  }
+  .mtab.active .mtab-dot{background:rgba(0,0,0,.22);color:#1a1206;border-color:rgba(0,0,0,.28)}
 
   /* ── layout ── */
-  .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px}
+  .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:16px;align-items:start}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}
+
+  /* ── 접이식 섹션 토글 ── */
+  .sec-toggle{
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-family:var(--body);font-weight:800;font-size:.86rem;color:var(--muted);
+    background:transparent;border:0;border-bottom:1px solid var(--line);
+    padding:2px 2px 10px;margin-bottom:12px;cursor:pointer;letter-spacing:.05em;
+  }
+  .sec-toggle:hover{color:var(--text)}
+  .sec-toggle:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .sec-toggle .arrow{color:var(--gold);transition:transform .3s}
+  .sec-toggle.open .arrow{transform:rotate(180deg)}
 
   /* ── mode chips ── */
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -76,6 +127,7 @@
   .chip.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 18px rgba(255,201,49,.25);color:var(--gold)}
   .chip small{display:block;font-weight:500;color:var(--muted);font-size:.68rem;margin-top:1px}
   .chip.active small{color:rgba(255,201,49,.75)}
+  .chip:disabled{opacity:.4;cursor:default;transform:none}
 
   /* ── slot machine ── */
   .machine{display:grid;grid-template-columns:1fr 200px;gap:14px;align-items:stretch}
@@ -118,7 +170,7 @@
   }
   .slot.rolling .centerline{border-color:rgba(255,201,49,.9);box-shadow:0 0 26px rgba(255,201,49,.28)}
 
-  /* ── side panel ── */
+  /* ── control panel ── */
   .side{display:flex;flex-direction:column;gap:10px}
   .status{
     border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:12px 14px;
@@ -144,51 +196,25 @@
     font-family:var(--body);font-weight:700;font-size:.92rem;color:var(--text);
     background:var(--panel2);border:1px solid var(--line);box-shadow:none;padding:11px;
   }
+  .btn.small{padding:9px 18px;font-size:.92rem}
   .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-
-  .win{
-    border:1px solid rgba(255,201,49,.4);border-radius:14px;padding:14px;flex:1;
-    background:linear-gradient(160deg, rgba(255,201,49,.08), rgba(255,46,136,.05));
+  .hintbox{
+    margin-top:auto;border:1px dashed var(--line);border-radius:12px;padding:10px 12px;
+    color:var(--muted);font-size:.76rem;line-height:1.6;
   }
-  .win .lb{font-size:.74rem;color:var(--muted);letter-spacing:.08em;font-weight:700}
-  .win .nm{font-family:var(--disp);font-size:1.4rem;margin-top:4px;word-break:break-all;color:var(--gold)}
-  .win .mt{color:var(--muted);font-size:.85rem;margin-top:6px;line-height:1.55}
-  .win a{color:var(--cyan);text-decoration:none}
-
-  /* ── pool list ── */
-  .pool-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
-  .pool-head h2{font-family:var(--disp);font-size:1rem;margin:0;letter-spacing:.03em}
-  .pool-head .cnt{color:var(--muted);font-size:.82rem}
-  .list{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow:auto;padding-right:6px}
-  .list::-webkit-scrollbar{width:8px}
-  .list::-webkit-scrollbar-thumb{background:var(--panel2);border-radius:8px}
-  .row{
-    display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;
-    padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);
+  .hintbox kbd{
+    font-family:var(--disp);font-size:.7rem;color:var(--gold);
+    border:1px solid rgba(255,201,49,.35);border-radius:5px;padding:1px 5px;
   }
-  .row .rk{font-family:var(--disp);font-size:.9rem;color:var(--cyan)}
-  .row .nm{font-weight:500;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .empty{color:var(--muted);text-align:center;padding:32px 0;font-size:.9rem}
 
   /* ── NK 뽑기 모드 ── */
-  .nk-banner{
-    width:100%;margin-bottom:14px;display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;
-    border:1px solid rgba(255,46,136,.4);border-radius:14px;padding:12px 16px;cursor:pointer;color:var(--text);
-    background:linear-gradient(120deg, rgba(255,46,136,.18), rgba(124,58,237,.16), rgba(34,211,238,.14));
-    transition:transform .1s, box-shadow .15s, border-color .15s;font-family:var(--body);
-  }
-  .nk-banner:hover{transform:translateY(-1px);box-shadow:0 0 18px rgba(255,46,136,.2)}
-  .nk-banner.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 20px rgba(255,201,49,.25)}
-  .nk-banner:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-  .nk-title{font-family:var(--disp);font-size:1.02rem}
-  .nk-desc{font-size:.78rem;color:var(--muted)}
-  .nk-setup{border:1px solid var(--line);border-radius:14px;background:var(--panel2);padding:12px 14px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+  .nk-setup{border:1px solid rgba(255,201,49,.3);border-radius:14px;background:var(--panel2);padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:11px}
+  .nk-setup h3{margin:0;font-family:var(--disp);font-size:.95rem;color:var(--gold);letter-spacing:.03em}
   .nk-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:.88rem}
   .nk-row label{display:flex;align-items:center;gap:7px}
   .nk-row input[type=number]{width:80px;background:#0a0d21;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 9px;font-family:var(--disp);font-size:.95rem}
   .nk-rules{flex-direction:column;align-items:flex-start;gap:6px;color:var(--muted)}
   .nk-rules b{color:var(--text)}
-  .btn.small{padding:9px 18px;font-size:.92rem}
   .nk-err{color:var(--magenta);font-size:.8rem;font-weight:700}
   .nk-panel{margin-top:14px;border:1px solid rgba(255,201,49,.3);border-radius:14px;background:var(--panel2);padding:12px 14px}
   .nk-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
@@ -201,14 +227,119 @@
   .tag.win{border-color:var(--gold);color:var(--gold)}
   .tag.champ{border-color:var(--gold);color:#1a1206;background:linear-gradient(135deg,#ffe08a,var(--gold));font-weight:900}
 
+  /* ── 결과 스테이지 (오른쪽 주인공) ── */
+  .stage{
+    position:relative;overflow:hidden;border-radius:18px;
+    min-height:380px;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:22px;border:1px solid rgba(255,201,49,.32);
+    background:linear-gradient(160deg,#11163a,#0a0d21 70%);
+  }
+  .stage .thumb{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    opacity:0;transform:scale(1.12);
+    filter:saturate(1.25) contrast(1.06);
+    transition:opacity .7s ease;
+  }
+  .stage.has-thumb .thumb{opacity:var(--thumb-op);animation:drift 18s ease-out forwards}
+  @keyframes drift{from{transform:scale(1.12)}to{transform:scale(1)}}
+  /* 글자가 놓이는 아래쪽만 어둡게 깔고, 위쪽은 이미지를 그대로 보여준다 */
+  .stage .veil{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(0deg,
+        rgba(7,9,26,.95) 0%,
+        rgba(7,9,26,.80) 22%,
+        rgba(7,9,26,.38) 46%,
+        rgba(7,9,26,var(--veil-top)) 78%,
+        rgba(7,9,26,0) 100%),
+      radial-gradient(130% 90% at 50% 130%, rgba(255,46,136,.16), transparent 62%);
+  }
+  .stage .in{position:relative;z-index:2}
+  .stage .lb{
+    font-size:.72rem;color:var(--gold);letter-spacing:.16em;font-weight:700;
+    text-transform:uppercase;text-shadow:0 1px 6px rgba(0,0,0,.95);
+  }
+  .stage-rank{
+    display:inline-block;margin:8px 0 6px;font-family:var(--disp);font-size:.88rem;
+    color:#1a1206;border-radius:999px;padding:3px 13px;
+    background:linear-gradient(135deg,#ffe08a,var(--gold));
+    box-shadow:0 0 18px rgba(255,201,49,.4);
+  }
+  .stage-rank:empty{display:none}
+  .stage-name{
+    font-family:var(--disp);line-height:1.06;word-break:break-word;
+    font-size:clamp(1.75rem,4.6vw,3.05rem);
+    text-shadow:0 2px 4px rgba(0,0,0,.95), 0 4px 26px rgba(0,0,0,.9), 0 0 46px rgba(255,201,49,.32);
+  }
+  .stage-meta{color:#dbe0f5;font-size:.86rem;margin-top:10px;line-height:1.7;text-shadow:0 1px 6px rgba(0,0,0,.9)}
+  .stage-meta a{color:var(--cyan);text-decoration:none}
+  .stage-meta a:hover{text-decoration:underline}
+  .thumb-note{
+    position:absolute;top:14px;right:16px;z-index:2;
+    font-size:.68rem;color:#aeb6d8;letter-spacing:.05em;
+    text-shadow:0 1px 6px rgba(0,0,0,.95);
+  }
+  .stage.reveal .in{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+
+  /* ── 리스트 배너 + 서랍 ── */
+  .banner{
+    width:100%;margin-top:14px;display:flex;align-items:center;gap:13px;text-align:left;
+    padding:15px 17px;border-radius:16px;cursor:pointer;color:var(--text);
+    font-family:var(--body);
+    border:1px solid var(--line);
+    background:linear-gradient(100deg, rgba(255,46,136,.2), rgba(124,58,237,.16) 55%, rgba(34,211,238,.16));
+    transition:transform .1s, border-color .18s, box-shadow .18s;
+  }
+  .banner:hover{transform:translateY(-1px);border-color:rgba(255,201,49,.55);box-shadow:0 0 24px rgba(255,201,49,.16)}
+  .banner:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .banner .ico{
+    width:38px;height:38px;flex:none;border-radius:10px;display:grid;place-items:center;
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.14);font-size:1.1rem;
+  }
+  .banner .txt{min-width:0}
+  .banner b{font-family:var(--disp);font-size:1rem;display:block;letter-spacing:.02em}
+  .banner small{color:#b9c0e0;font-size:.78rem;display:block;margin-top:1px}
+  .banner .arrow{margin-left:auto;color:var(--gold);font-size:1rem;transition:transform .3s}
+  .banner.open .arrow{transform:rotate(180deg)}
+
+  .drawer{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s ease, opacity .25s ease;opacity:0}
+  .drawer.open{grid-template-rows:1fr;opacity:1}
+  .drawer > .inner{overflow:hidden;min-height:0}
+  .drawer.open > .inner{padding-top:14px}
+  .drawer.chips-drawer.open > .inner{padding-top:0}
+
+  .pool-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .pool-head h2{font-family:var(--disp);font-size:.95rem;margin:0;letter-spacing:.03em}
+  .pool-head .cnt{color:var(--muted);font-size:.82rem}
+  .list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto;padding-right:6px}
+  .list::-webkit-scrollbar{width:8px}
+  .list::-webkit-scrollbar-thumb{background:var(--panel2);border-radius:8px}
+  .row{
+    display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;
+    padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);
+  }
+  .row .rk{font-family:var(--disp);font-size:.9rem;color:var(--cyan)}
+  .row .nm{font-weight:500;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty{color:var(--muted);text-align:center;padding:32px 0;font-size:.9rem}
+
+  .credit{color:var(--muted);font-size:.72rem;margin-top:12px;text-align:right}
+  .credit a{color:var(--cyan);text-decoration:none}
+
   @media (max-width:920px){
     .grid,.machine{grid-template-columns:1fr}
     :root{--winH:380px}
-    .list{max-height:340px}
+    .list{max-height:320px}
     .src-note{text-align:left}
+    .stage{min-height:260px}
+    .hintbox{margin-top:0}
+    .mtab{font-size:.88rem;padding:11px 6px}
   }
   @media (prefers-reduced-motion:reduce){
     .mcard.winner{animation:none}
+    .stage.has-thumb .thumb{animation:none;transform:none}
+    .stage.reveal .in{animation:none}
+    .drawer{transition:none}
   }
 </style>
 </head>
@@ -231,16 +362,28 @@
     </div>
   </header>
 
-  <div class="grid">
-    <section class="card">
-      <div class="chips" id="chips" role="tablist" aria-label="난이도 구간"></div>
+  <!-- ── 상단 모드 메뉴 ── -->
+  <nav class="modebar" role="tablist" aria-label="모드 선택">
+    <button class="mtab active" id="tabBasic" type="button" role="tab" aria-selected="true">🎲 기본 룰렛</button>
+    <button class="mtab" id="tabNk" type="button" role="tab" aria-selected="false">
+      🎯 NK 뽑기 모드 <span class="mtab-dot" id="nkDot" hidden>진행중</span>
+    </button>
+  </nav>
 
-      <button class="nk-banner" id="nkBanner" type="button">
-        <span class="nk-title">🎰 NK 뽑기 모드</span>
-        <span class="nk-desc">n개 선발 → k차 추첨 → 최종 결승까지 이어지는 토너먼트 가챠</span>
+  <div class="grid">
+    <!-- ── 왼쪽: 릴 + 조작부 ── -->
+    <section class="card">
+      <button class="sec-toggle open" id="chipsToggle" type="button" aria-expanded="true" aria-controls="chipsDrawer">
+        <span>난이도 구간 선택</span><span class="arrow">▼</span>
       </button>
+      <div class="drawer chips-drawer open" id="chipsDrawer">
+        <div class="inner">
+          <div class="chips" id="chips" role="tablist" aria-label="난이도 구간"></div>
+        </div>
+      </div>
 
       <div class="nk-setup" id="nkSetup" hidden>
+        <h3>🎯 NK 뽑기 설정</h3>
         <div class="nk-row">
           <label>선발 개수 n <input type="number" id="nkN" min="2" value="8"></label>
           <label>추첨 횟수 k <input type="number" id="nkK" min="1" value="3"></label>
@@ -250,8 +393,7 @@
           <label><input type="radio" name="nkRule" value="include"> <b>k당첨</b> — 2단계에서 뽑힌 k개만 결승 진출</label>
         </div>
         <div class="nk-row">
-          <button class="btn small" id="nkStart" type="button">시작</button>
-          <button class="btn ghost small" id="nkClose" type="button">닫기</button>
+          <button class="btn small" id="nkStart" type="button">토너먼트 시작</button>
           <span class="nk-err" id="nkErr"></span>
         </div>
       </div>
@@ -273,10 +415,9 @@
           <button class="btn" id="spinBtn" type="button">SPIN</button>
           <button class="btn ghost" id="turboBtn" type="button">터보 스핀 (짧게)</button>
           <button class="btn ghost" id="soundBtn" type="button">🔊 사운드 켜짐</button>
-          <div class="win">
-            <div class="lb">당첨 맵</div>
-            <div class="nm" id="winName">—</div>
-            <div class="mt" id="winMeta">SPIN을 누르면 결과가 여기에 표시됩니다.</div>
+          <div class="hintbox">
+            도는 중에 <kbd>SPIN</kbd>을 또 누르면 부스트.<br>
+            <kbd>Space</kbd> 로도 돌릴 수 있습니다.
           </div>
         </div>
       </div>
@@ -284,18 +425,46 @@
       <div class="nk-panel" id="nkPanel" hidden>
         <div class="nk-head">
           <span class="nk-stage" id="nkStage"></span>
-          <button class="btn ghost small" id="nkQuit" type="button">NK 모드 종료</button>
+          <button class="btn ghost small" id="nkQuitBtn" type="button">토너먼트 중단</button>
         </div>
         <div class="nk-groups" id="nkGroups"></div>
       </div>
     </section>
 
+    <!-- ── 오른쪽: 결과 스테이지 + 리스트 배너 ── -->
     <section class="card">
-      <div class="pool-head">
-        <h2 id="poolTitle">맵 풀</h2>
-        <span class="cnt" id="poolCount"></span>
+      <div class="stage" id="stage" aria-live="polite">
+        <img class="thumb" id="thumbImg" alt="" aria-hidden="true" />
+        <div class="veil" aria-hidden="true"></div>
+        <div class="thumb-note" id="thumbNote"></div>
+        <div class="in">
+          <div class="lb" id="stageLabel">당첨 맵</div>
+          <div class="stage-rank" id="winRank"></div>
+          <div class="stage-name" id="winName">SPIN 대기 중</div>
+          <div class="stage-meta" id="winMeta">왼쪽에서 구간을 고르고 SPIN을 누르세요.</div>
+        </div>
       </div>
-      <div class="list" id="poolList"><div class="empty">데이터를 불러오는 중…</div></div>
+
+      <button class="banner" id="listBanner" type="button" aria-expanded="false" aria-controls="drawer">
+        <span class="ico" aria-hidden="true">📜</span>
+        <span class="txt">
+          <b id="bnrTitle">데몬 리스트</b>
+          <small id="bnrSub">탭하면 이번 구간의 전체 맵이 펼쳐집니다</small>
+        </span>
+        <span class="arrow" aria-hidden="true">▼</span>
+      </button>
+
+      <div class="drawer" id="drawer">
+        <div class="inner">
+          <div class="pool-head">
+            <h2 id="poolTitle">맵 풀</h2>
+            <span class="cnt" id="poolCount"></span>
+          </div>
+          <div class="list" id="poolList"><div class="empty">데이터를 불러오는 중…</div></div>
+        </div>
+      </div>
+
+      <div class="credit">썸네일 제공: <a href="https://levelthumbs.prevter.me" target="_blank" rel="noopener">Level Thumbnails</a></div>
     </section>
   </div>
 </div>
@@ -303,12 +472,18 @@
 <script>
 /* ────────────────────────────────────────────────
    데이터 소스
-   - AREDL API v2 : 익데(메인 1~75) / 익텐(76~150) / 레거시(150+) / Top10
-   - TSL형 리스트 : 이지데몬 / 미데 / 하데 / 인데 (pages.dev 사이트의 data/_list.json)
-   - 전부 실패하면 내장 예비 풀로 자동 전환 (순위 표기는 부정확할 수 있음)
+   - AREDL API v2 : 익데/메인/익텐/레거시/Top10
+   - TSL형 리스트 : 이지데몬 / 미데 / 하데 (pages.dev의 data/_list.json)
+   - IDL 공식 API : 인데
+   - 직접 요청이 CORS로 막히면 공개 프록시로 자동 재시도
+   - 전부 실패하면 내장 예비 풀로 전환 (배지 클릭 → 재시도)
+   - 썸네일       : Level Thumbnails (levelthumbs.prevter.me)
 ──────────────────────────────────────────────── */
 
 const AREDL_API = 'https://api.aredl.net/v2/api/aredl/levels';
+const SAVE_API = `${location.origin}/api/recommendations`;
+const THUMB_BASE = 'https://levelthumbs.prevter.me';
+const GDBROWSER_SEARCH = 'https://gdbrowser.com/api/search';
 
 const FALLBACK = {
   easy:   ['The Lightning Road','xo','B','Platinum Adventure','Speed Racer','Buck Force','Extinction','Dance Massacre'],
@@ -336,18 +511,27 @@ const MODES = [
 /* ── 상태 ── */
 const $ = id => document.getElementById(id);
 const els = {
-  chips:$('chips'), slot:$('slot'), track:$('track'),
+  chips:$('chips'), chipsToggle:$('chipsToggle'), chipsDrawer:$('chipsDrawer'),
+  slot:$('slot'), track:$('track'),
   stMode:$('stMode'), stBadge:$('stBadge'),
   spin:$('spinBtn'), turbo:$('turboBtn'), sound:$('soundBtn'),
-  winName:$('winName'), winMeta:$('winMeta'),
+  stage:$('stage'), stageLabel:$('stageLabel'), thumbImg:$('thumbImg'), thumbNote:$('thumbNote'),
+  winName:$('winName'), winRank:$('winRank'), winMeta:$('winMeta'),
+  banner:$('listBanner'), bnrTitle:$('bnrTitle'), bnrSub:$('bnrSub'), drawer:$('drawer'),
   poolTitle:$('poolTitle'), poolCount:$('poolCount'), poolList:$('poolList'),
+  tabBasic:$('tabBasic'), tabNk:$('tabNk'), nkDot:$('nkDot'),
 };
 let active = MODES[0];
+const ui = { tab: 'basic' };
 
 let soundOn = true;
 let aredlCache = null;              // 정규화된 AREDL 전체 목록
 const tslCache = new Map();         // modeId -> {pool, live, base}
 const poolCache = new Map();        // modeId -> {pool, live}
+const idLookupCache = new Map();    // 맵 이름 -> 레벨 ID (또는 null)
+let thumbToken = 0;                 // 늦게 도착한 썸네일이 새 결과를 덮어쓰지 않게
+const sessionId = localStorage.getItem('gd_roulette_session_id') || crypto.randomUUID();
+localStorage.setItem('gd_roulette_session_id', sessionId);
 
 /* ── 유틸 ── */
 const pretty = s => s.replace(/\.json$/,'').replace(/_/g,' ').trim();
@@ -393,7 +577,7 @@ async function loadAredl(){
   return norm;
 }
 
-/* ── TSL형 리스트 로딩 (EDL/MDL/HDL/IDL) ── */
+/* ── TSL형 리스트 로딩 (EDL/MDL/HDL) ── */
 async function loadTsl(mode){
   if(tslCache.has(mode.id)) return tslCache.get(mode.id);
   for(const base of mode.bases){
@@ -427,6 +611,7 @@ async function loadIdl(mode){
     .map(x => ({
       name: x.name,
       rank: x.position,
+      levelId: x.levelID ?? x.level_id ?? x.levelId ?? null,
       publisher: x.publisher || null,
       yt: x.ytcode || null,
     }))
@@ -468,6 +653,52 @@ async function getPool(mode){
   return out;
 }
 
+/* ────────────────────────────────────────────────
+   썸네일 (Level Thumbnails)
+──────────────────────────────────────────────── */
+const thumbUrl = (id, q) => q ? `${THUMB_BASE}/thumbnail/${id}/${q}` : `${THUMB_BASE}/thumbnail/${id}`;
+
+async function lookupLevelId(name){
+  if(!name) return null;
+  if(idLookupCache.has(name)) return idLookupCache.get(name);
+  let id = null;
+  try{
+    const r = await fetchJSON(`${GDBROWSER_SEARCH}/${encodeURIComponent(name)}?count=1`, 6000);
+    const first = Array.isArray(r) ? r[0] : null;
+    if(first && first.id) id = String(first.id);
+  }catch(e){ /* 검색 실패는 조용히 무시 */ }
+  idLookupCache.set(name, id);
+  return id;
+}
+
+function clearThumb(note=''){
+  thumbToken++;
+  els.stage.classList.remove('has-thumb');
+  els.thumbImg.removeAttribute('src');
+  els.thumbNote.textContent = note;
+}
+
+function paintThumb(levelId){
+  const token = ++thumbToken;
+  els.stage.classList.remove('has-thumb');
+  els.thumbImg.removeAttribute('src');
+  if(!levelId){ els.thumbNote.textContent = '썸네일 없음'; return; }
+  els.thumbNote.textContent = '썸네일 불러오는 중…';
+  const url = thumbUrl(levelId);
+  const probe = new Image();
+  probe.onload = () => {
+    if(token !== thumbToken) return;
+    els.thumbImg.src = url;
+    els.stage.classList.add('has-thumb');
+    els.thumbNote.textContent = '';
+  };
+  probe.onerror = () => {
+    if(token !== thumbToken) return;
+    els.thumbNote.textContent = '썸네일 없음';
+  };
+  probe.src = url;
+}
+
 /* ── 사운드 (WebAudio, 파일 없음) ── */
 let actx = null;
 function beep(freq, dur=0.05, gain=0.05, type='square'){
@@ -487,14 +718,17 @@ function winChime(){
 }
 
 /* ── UI 렌더 ── */
+function nkLocked(){ return nk.active && nk.stage >= 1; }
+
 function renderChips(){
   els.chips.innerHTML = '';
   MODES.forEach(m => {
     const b = document.createElement('button');
     b.className = 'chip' + (m.id===active.id ? ' active':'');
     b.setAttribute('role','tab');
+    b.disabled = nkLocked();
     b.innerHTML = `${m.label}<small>${m.hint}</small>`;
-    b.addEventListener('click', () => { if(!reel.rolling && !nk.active) selectMode(m); });
+    b.addEventListener('click', () => { if(!reel.rolling && !nkLocked()) selectMode(m); });
     els.chips.appendChild(b);
   });
 }
@@ -521,6 +755,43 @@ function renderPoolList(pool){
   els.poolList.appendChild(frag);
 }
 
+function setBanner(mode, count){
+  els.bnrTitle.textContent = `${mode.label} 데몬 리스트`;
+  const open = els.drawer.classList.contains('open');
+  if(count == null){
+    els.bnrSub.textContent = '맵 목록 불러오는 중…';
+  } else {
+    els.bnrSub.textContent = open
+      ? `${mode.hint} · ${count}개 — 탭하면 접힙니다`
+      : `${mode.hint} · ${count}개 — 탭해서 펼치기`;
+  }
+}
+
+function setBannerNk(count){
+  els.bnrTitle.textContent = 'NK 진행 풀';
+  const open = els.drawer.classList.contains('open');
+  els.bnrSub.textContent = `${nkStageName()} · ${count}개 — ${open ? '탭하면 접힙니다' : '탭해서 펼치기'}`;
+}
+
+function toggleDrawer(force){
+  const open = force !== undefined ? force : !els.drawer.classList.contains('open');
+  els.drawer.classList.toggle('open', open);
+  els.banner.classList.toggle('open', open);
+  els.banner.setAttribute('aria-expanded', String(open));
+  const count = els.poolCount.textContent.replace('개','').trim();
+  if(ui.tab === 'nk' && nk.active) setBannerNk(count ? Number(count) : 0);
+  else setBanner(active, count ? Number(count) : null);
+  beep(open ? 660 : 440, .06, .04, 'triangle');
+}
+
+function toggleChips(force){
+  const open = force !== undefined ? force : !els.chipsDrawer.classList.contains('open');
+  els.chipsDrawer.classList.toggle('open', open);
+  els.chipsToggle.classList.toggle('open', open);
+  els.chipsToggle.setAttribute('aria-expanded', String(open));
+  beep(open ? 660 : 440, .06, .04, 'triangle');
+}
+
 function cardHTML(item){
   const d = document.createElement('div');
   d.className = 'mcard';
@@ -544,21 +815,30 @@ async function selectMode(m){
   els.stMode.textContent = `${m.label} · ${m.hint}`;
   setBadge('loading');
   els.poolTitle.textContent = `${m.label} 맵 풀`;
-  els.winName.textContent = '—';
-  els.winMeta.textContent = 'SPIN을 누르면 결과가 여기에 표시됩니다.';
+  setBanner(m, null);
+  els.winRank.textContent = '';
+  els.winName.textContent = 'SPIN 대기 중';
+  els.winMeta.textContent = `${m.label} 구간이 장전됐습니다. SPIN을 누르세요.`;
+  clearThumb();
   const { pool, live } = await getPool(m);
   if(active.id !== m.id) return; // 로딩 중 다른 모드로 이동
   setBadge(live?'live':'fb', pool.length);
   renderPoolList(pool);
+  setBanner(m, pool.length);
   idleTrack(pool);
+}
+
+/* 탭 전환 시 오른쪽 목록을 일반 모드 풀로 복원 (결과 스테이지는 유지) */
+async function refreshBasicView(){
+  const { pool, live } = await getPool(active);
+  setBadge(live?'live':'fb', pool.length);
+  els.poolTitle.textContent = `${active.label} 맵 풀`;
+  renderPoolList(pool);
+  setBanner(active, pool.length);
 }
 
 /* ────────────────────────────────────────────────
    스핀 (물리 기반)
-   - SPIN 시작 → 속도가 마찰로 줄어들며 릴이 감속
-   - 도는 중에 SPIN을 또 누르면 속도가 다시 붙음 (부스트)
-   - 속도가 거의 0이 되면 가장 가까운 카드에 스냅 → 그 카드가 당첨
-   - 카드 시퀀스는 같은 맵이 직전/전전 카드와 겹치지 않게 생성
 ──────────────────────────────────────────────── */
 function shuffled(arr){
   const a = arr.slice();
@@ -567,7 +847,7 @@ function shuffled(arr){
 }
 
 const reel = {
-  rolling:false, y:0, v:0, friction:1.05, lastT:0,
+  rolling:false, starting:false, y:0, v:0, friction:1.05, lastT:0,
   nodes:[], items:[], lastHot:-1,
   bag:[], lastA:null, lastB:null, pool:[],
 };
@@ -616,8 +896,13 @@ function centerIndex(){
 }
 
 function setRollingUI(on){
-  els.spin.textContent = on ? 'SPIN +부스트' : (nk.active ? nkSpinLabel() : 'SPIN');
-  els.turbo.textContent = on ? '빨리 멈추기' : '터보 스핀 (짧게)';
+  if(on){
+    els.spin.textContent = 'SPIN +부스트';
+    els.turbo.textContent = '빨리 멈추기';
+  } else {
+    els.spin.textContent = (ui.tab==='nk' && nk.active) ? nkSpinLabel() : 'SPIN';
+    els.turbo.textContent = '터보 스핀 (짧게)';
+  }
 }
 
 function frame(now){
@@ -679,19 +964,51 @@ async function finish(n){
     }catch(e){}
   }
 
+  // 이름·순위는 즉시 크게 띄운다
+  els.winRank.textContent = winner.rank ? `#${winner.rank}` : '';
   els.winName.textContent = detailName;
-  const bits = [];
-  if(winner.rank) bits.push(`#${winner.rank}`);
-  bits.push(`${active.label} (${active.hint})`);
-  if(winner.publisher) bits.push(`by ${winner.publisher}`);
-  if(levelId) bits.push(`레벨 ID <a href="https://gdbrowser.com/${levelId}" target="_blank" rel="noopener">${levelId}</a>`);
-  if(winner.yt) bits.push(`<a href="https://youtu.be/${winner.yt}" target="_blank" rel="noopener">영상 보기</a>`);
-  els.winMeta.innerHTML = bits.join(' · ');
+  els.stage.classList.remove('reveal');
+  void els.stage.offsetWidth;          // 애니메이션 재시작
+  els.stage.classList.add('reveal');
+  els.winMeta.textContent = `${active.label} (${active.hint})`;
+  els.thumbNote.textContent = '썸네일 찾는 중…';
 
   els.slot.classList.remove('rolling');
   reel.rolling = false;
   setRollingUI(false);
-  if(nk.active) nkAfterWin(winner);
+
+  // 레벨 ID가 없으면 이름으로 한 번 추정
+  let guessed = false;
+  if(!levelId){
+    const found = await lookupLevelId(detailName);
+    if(found){ levelId = found; guessed = true; }
+  }
+
+  const bits = [];
+  bits.push(`${active.label} (${active.hint})`);
+  if(winner.publisher) bits.push(`by ${winner.publisher}`);
+  if(levelId) bits.push(`레벨 ID <a href="https://gdbrowser.com/${levelId}" target="_blank" rel="noopener">${levelId}</a>${guessed ? ' (이름 검색)' : ''}`);
+  if(winner.yt) bits.push(`<a href="https://youtu.be/${winner.yt}" target="_blank" rel="noopener">영상 보기</a>`);
+  els.winMeta.innerHTML = bits.join(' · ');
+
+  paintThumb(levelId);
+
+  saveRecommendation({ map_name: detailName }).catch(() => {});
+
+  if(ui.tab === 'nk' && nk.active) nkAfterWin(winner);
+}
+
+async function saveRecommendation(payload){
+  const res = await fetch(SAVE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      session_id: sessionId,
+      map_name: payload.map_name,
+    }),
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return await res.json();
 }
 
 async function spin(turbo=false){
@@ -709,11 +1026,13 @@ async function spin(turbo=false){
     return;
   }
 
-  if(nk.active && nk.stage === 4) return;
+  // NK 탭인데 토너먼트가 없거나 이미 끝났다면 무시
+  if(ui.tab === 'nk' && (!nk.active || nk.stage === 4)) return;
+
   if(reel.starting) return;
   reel.starting = true;
   let pool;
-  if(nk.active){ pool = nkCurrentPool().slice(); }
+  if(ui.tab === 'nk' && nk.active){ pool = nkCurrentPool().slice(); }
   else { ({ pool } = await getPool(active)); }
   reel.starting = false;
   if(!pool.length) return;
@@ -729,8 +1048,11 @@ async function spin(turbo=false){
 
   els.slot.classList.add('rolling');
   setRollingUI(true);
-  els.winName.textContent = '…';
-  els.winMeta.textContent = '릴 회전 중… SPIN을 또 누르면 부스트!';
+  els.stage.classList.remove('reveal');
+  els.winRank.textContent = '';
+  els.winName.textContent = '릴 회전 중…';
+  els.winMeta.textContent = 'SPIN을 또 누르면 부스트!';
+  clearThumb();
 
   while(reel.items.length < centerIndex() + 14) appendCard();
   reel.lastT = performance.now();
@@ -738,7 +1060,7 @@ async function spin(turbo=false){
 }
 
 /* ────────────────────────────────────────────────
-   NK 뽑기 모드
+   NK 뽑기 모드 (상단 메뉴에서 전환)
    1단계 선발: 기본 풀에서 n번 스핀 (뽑힌 맵은 풀에서 제거)
    2단계 추첨: 선발된 n개로 k번 스핀 (뽑힌 맵은 제거)
    3단계 결승: k제외 → 살아남은 n-k개 / k당첨 → 뽑힌 k개 중 1개
@@ -749,9 +1071,9 @@ const nk = {
   pool:[], selected:[], stage2:[], picked:[], finalPool:[], champion:null,
 };
 const nkEls = {
-  banner:$('nkBanner'), setup:$('nkSetup'), n:$('nkN'), k:$('nkK'),
-  start:$('nkStart'), close:$('nkClose'), err:$('nkErr'),
-  panel:$('nkPanel'), stage:$('nkStage'), groups:$('nkGroups'), quit:$('nkQuit'),
+  setup:$('nkSetup'), n:$('nkN'), k:$('nkK'),
+  start:$('nkStart'), err:$('nkErr'),
+  panel:$('nkPanel'), stage:$('nkStage'), groups:$('nkGroups'), quit:$('nkQuitBtn'),
 };
 
 function nkCurrentPool(){
@@ -765,7 +1087,7 @@ function nkStageName(){
   if(nk.stage === 1) return `1단계 선발 · ${nk.selected.length}/${nk.n}`;
   if(nk.stage === 2) return `2단계 ${nk.rule==='exclude'?'제외':'당첨'} 추첨 · ${nk.picked.length}/${nk.k}`;
   if(nk.stage === 3) return `🏁 결승 · 후보 ${nk.finalPool.length}개`;
-  return '🏆 종료';
+  return '🏆 토너먼트 종료';
 }
 
 function nkSpinLabel(){
@@ -795,7 +1117,15 @@ function nkGroup(label, items, clsFor){
   return g;
 }
 
+function updateNkDot(){
+  els.nkDot.hidden = !nk.active;
+  els.nkDot.textContent = nk.stage === 4 ? '완료' : '진행중';
+}
+
 function updateNkUI(){
+  updateNkDot();
+  if(ui.tab !== 'nk') return;
+
   nkEls.stage.textContent = nkStageName();
   nkEls.groups.innerHTML = '';
 
@@ -823,18 +1153,19 @@ function updateNkUI(){
     row.className = 'nk-row';
     const b1 = document.createElement('button');
     b1.className = 'btn small'; b1.type = 'button'; b1.textContent = '🔁 NK 다시 설정';
-    b1.addEventListener('click', () => { nkQuit(); nkEls.setup.hidden = false; });
+    b1.addEventListener('click', () => { nkReset(); });
     const b2 = document.createElement('button');
-    b2.className = 'btn ghost small'; b2.type = 'button'; b2.textContent = '일반 룰렛으로 돌아가기';
-    b2.addEventListener('click', () => nkQuit());
+    b2.className = 'btn ghost small'; b2.type = 'button'; b2.textContent = '기본 룰렛으로';
+    b2.addEventListener('click', () => { nkReset(); setTab('basic'); });
     row.appendChild(b1); row.appendChild(b2);
     nkEls.groups.appendChild(row);
   }
 
   // 오른쪽 풀 목록 = 현재 단계 풀
   const cur = nkCurrentPool();
-  els.poolTitle.textContent = 'NK 모드 · ' + nkStageName();
+  els.poolTitle.textContent = 'NK · ' + nkStageName();
   renderPoolList(cur);
+  setBannerNk(cur.length);
 
   if(!reel.rolling){
     els.spin.textContent = nkSpinLabel();
@@ -848,7 +1179,7 @@ function nkAfterWin(w){
     nk.selected.push(w);
     const i = nk.pool.indexOf(w); if(i > -1) nk.pool.splice(i,1);
     nk.count++;
-    els.winMeta.innerHTML += ' · <b>선발!</b>';
+    els.winMeta.innerHTML += ' · <b style="color:var(--cyan)">선발!</b>';
     if(nk.count >= nk.n){
       nk.stage = 2; nk.count = 0;
       nk.stage2 = nk.selected.slice();
@@ -865,6 +1196,7 @@ function nkAfterWin(w){
   } else if(nk.stage === 3){
     nk.champion = w;
     nk.stage = 4;
+    els.stageLabel.textContent = '🏆 최종 우승 맵';
     els.winMeta.innerHTML = '🏆 <b style="color:var(--gold)">최종 우승!</b> · ' + els.winMeta.innerHTML;
     winChime(); setTimeout(winChime, 500);
   }
@@ -894,33 +1226,76 @@ async function nkStart(){
 
   nkEls.setup.hidden = true;
   nkEls.panel.hidden = false;
-  nkEls.banner.classList.add('on');
-  els.winName.textContent = '—';
+  toggleChips(false);
+  renderChips();
+  els.spin.disabled = false;
+  els.turbo.disabled = false;
+  els.stageLabel.textContent = 'NK 뽑기 진행 중';
+  els.winRank.textContent = '';
+  els.winName.textContent = 'SPIN 대기 중';
   els.winMeta.textContent = `${active.label} 풀 ${pool.length}개에서 ${n}개를 선발합니다. SPIN!`;
+  clearThumb();
   updateNkUI();
 }
 
-function nkQuit(){
+/* 토너먼트 상태를 초기화하고 NK 설정 화면으로 */
+function nkReset(){
   nk.active = false; nk.stage = 0;
   nkEls.panel.hidden = true;
-  nkEls.banner.classList.remove('on');
-  els.spin.disabled = els.turbo.disabled = false;
-  setRollingUI(false);
-  selectMode(active);
+  els.stageLabel.textContent = '당첨 맵';
+  updateNkDot();
+  renderChips();
+  if(ui.tab === 'nk'){
+    nkEls.setup.hidden = false;
+    els.spin.disabled = true;
+    els.turbo.disabled = true;
+    els.spin.textContent = 'SPIN';
+    refreshBasicView();
+  }
 }
 
-nkEls.banner.addEventListener('click', () => {
-  if(reel.rolling) return;
-  if(nk.active){ nkEls.panel.hidden = !nkEls.panel.hidden; return; }
-  nkEls.setup.hidden = !nkEls.setup.hidden;
-});
-nkEls.close.addEventListener('click', () => { nkEls.setup.hidden = true; });
-nkEls.start.addEventListener('click', nkStart);
-nkEls.quit.addEventListener('click', () => { if(!reel.rolling) nkQuit(); });
+/* ── 상단 탭 전환 ── */
+function setTab(t){
+  if(reel.rolling || ui.tab === t) return;
+  ui.tab = t;
+  els.tabBasic.classList.toggle('active', t === 'basic');
+  els.tabNk.classList.toggle('active', t === 'nk');
+  els.tabBasic.setAttribute('aria-selected', String(t === 'basic'));
+  els.tabNk.setAttribute('aria-selected', String(t === 'nk'));
+  beep(t === 'nk' ? 700 : 500, .07, .05, 'triangle');
+
+  if(t === 'nk'){
+    if(nk.active){
+      nkEls.setup.hidden = true;
+      nkEls.panel.hidden = false;
+      els.spin.disabled = (nk.stage === 4);
+      els.turbo.disabled = (nk.stage === 4);
+      els.stageLabel.textContent = nk.stage === 4 ? '🏆 최종 우승 맵' : 'NK 뽑기 진행 중';
+      updateNkUI();
+    } else {
+      nkEls.setup.hidden = false;
+      nkEls.panel.hidden = true;
+      els.spin.disabled = true;
+      els.turbo.disabled = true;
+      els.winMeta.textContent = '난이도를 고르고 n·k를 설정한 뒤 토너먼트를 시작하세요.';
+    }
+  } else {
+    nkEls.setup.hidden = true;
+    nkEls.panel.hidden = true;
+    els.spin.disabled = false;
+    els.turbo.disabled = false;
+    els.spin.textContent = 'SPIN';
+    els.stageLabel.textContent = '당첨 맵';
+    refreshBasicView();
+  }
+}
 
 /* ── 이벤트 ── */
+els.tabBasic.addEventListener('click', () => setTab('basic'));
+els.tabNk.addEventListener('click', () => setTab('nk'));
+els.chipsToggle.addEventListener('click', () => toggleChips());
 els.stBadge.addEventListener('click', () => {
-  if(reel.rolling || nk.active) return;
+  if(reel.rolling || nkLocked()) return;
   if(!els.stBadge.classList.contains('fb')) return;
   poolCache.delete(active.id);
   tslCache.delete(active.id);
@@ -928,11 +1303,20 @@ els.stBadge.addEventListener('click', () => {
   if(active.kind === 'idl') idlCache = null;
   selectMode(active);
 });
+nkEls.start.addEventListener('click', nkStart);
+nkEls.quit.addEventListener('click', () => { if(!reel.rolling) nkReset(); });
 els.spin.addEventListener('click', ()=>spin(false));
 els.turbo.addEventListener('click', ()=>spin(true));
 els.sound.addEventListener('click', ()=>{
   soundOn = !soundOn;
   els.sound.textContent = soundOn ? '🔊 사운드 켜짐' : '🔇 사운드 꺼짐';
+});
+els.banner.addEventListener('click', ()=>toggleDrawer());
+document.addEventListener('keydown', e=>{
+  if(e.code === 'Space' && !/^(INPUT|TEXTAREA|BUTTON)$/.test(document.activeElement.tagName)){
+    e.preventDefault();
+    if(!els.spin.disabled || reel.rolling) spin(false);
+  }
 });
 
 /* ── 시작 ── */
