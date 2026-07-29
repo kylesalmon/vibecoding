@@ -291,8 +291,6 @@ const tslCache = new Map();         // modeId -> {pool, live, base}
 const poolCache = new Map();        // modeId -> {pool, live}
 const sessionId = localStorage.getItem('gd_roulette_session_id') || crypto.randomUUID();
 localStorage.setItem('gd_roulette_session_id', sessionId);
-const sessionId = localStorage.getItem('gd_roulette_session_id') || crypto.randomUUID();
-localStorage.setItem('gd_roulette_session_id', sessionId);
 
 /* ── 유틸 ── */
 const pretty = s => s.replace(/\.json$/,'').replace(/_/g,' ').trim();
@@ -622,22 +620,7 @@ async function finish(n){
 
   els.slot.classList.remove('rolling');
   saveRecommendation({
-    mode_key: active.id,
-    mode_label: active.label,
     map_name: detailName,
-    map_rank: winner.rank ?? null,
-    map_tier: active.hint ?? null,
-    source_name: active.label,
-    source_url: active.url ?? null,
-    raw_payload: {
-      name: detailName,
-      rank: winner.rank ?? null,
-      levelId,
-      publisher: winner.publisher ?? null,
-      file: winner.file ?? null,
-      base: winner.base ?? null,
-      tier: active.hint ?? null,
-    },
   }).catch(() => {});
   reel.rolling = false;
   setRollingUI(false);
@@ -649,7 +632,7 @@ async function saveRecommendation(payload){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       session_id: sessionId,
-      ...payload,
+      map_name: payload.map_name,
     }),
   });
   if(!res.ok) throw new Error(await res.text());

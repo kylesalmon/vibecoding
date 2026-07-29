@@ -229,14 +229,7 @@ const server = http.createServer((req, res) => {
         const body = JSON.parse(raw || '{}');
         const payload = {
           session_id: typeof body.session_id === 'string' ? body.session_id : null,
-          mode_key: typeof body.mode_key === 'string' ? body.mode_key : 'unknown',
-          mode_label: typeof body.mode_label === 'string' ? body.mode_label : 'unknown',
           map_name: typeof body.map_name === 'string' ? body.map_name : 'unknown',
-          map_rank: Number.isInteger(body.map_rank) ? body.map_rank : null,
-          map_tier: typeof body.map_tier === 'string' ? body.map_tier : null,
-          source_name: typeof body.source_name === 'string' ? body.source_name : null,
-          source_url: typeof body.source_url === 'string' ? body.source_url : null,
-          raw_payload: body.raw_payload && typeof body.raw_payload === 'object' ? body.raw_payload : {},
         };
         const inserted = await saveRecommendation(payload);
         sendJson(res, 200, { ok: true, inserted });
