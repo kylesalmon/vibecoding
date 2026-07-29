@@ -5,6 +5,8 @@ const path = require('path');
 const PORT = process.env.PORT || 3000;
 const DEFAULT_API_KEY = process.env.OPENAI_API_KEY || '';
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 function sendJson(res, status, body) {
   res.writeHead(status, {
@@ -12,6 +14,30 @@ function sendJson(res, status, body) {
     'Access-Control-Allow-Origin': '*',
   });
   res.end(JSON.stringify(body));
+}
+
+async function saveRecommendation(payload) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables are missing.');
+  }
+
+  const response = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/roulette_recommendations`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Supabase insert failed: ${response.status} ${text}`);
+  }
+
+  return response.json();
 }
 
 function serveIndex(res) {
@@ -190,6 +216,32 @@ const server = http.createServer((req, res) => {
         sendJson(res, 200, { ...normalized, zodiac, zodiacKr, mode: 'openai' });
       } catch (error) {
         sendJson(res, 500, { error: error.message || '서버 오류' });
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/recommendations') {
+    let raw = '';
+    req.on('data', chunk => { raw += chunk; });
+    req.on('end', async () => {
+      try {
+        const body = JSON.parse(raw || '{}');
+        const payload = {
+          session_id: typeof body.session_id === 'string' ? body.session_id : null,
+          mode_key: typeof body.mode_key === 'string' ? body.mode_key : 'unknown',
+          mode_label: typeof body.mode_label === 'string' ? body.mode_label : 'unknown',
+          map_name: typeof body.map_name === 'string' ? body.map_name : 'unknown',
+          map_rank: Number.isInteger(body.map_rank) ? body.map_rank : null,
+          map_tier: typeof body.map_tier === 'string' ? body.map_tier : null,
+          source_name: typeof body.source_name === 'string' ? body.source_name : null,
+          source_url: typeof body.source_url === 'string' ? body.source_url : null,
+          raw_payload: body.raw_payload && typeof body.raw_payload === 'object' ? body.raw_payload : {},
+        };
+        const inserted = await saveRecommendation(payload);
+        sendJson(res, 200, { ok: true, inserted });
+      } catch (error) {
+        sendJson(res, 500, { error: error.message || 'Failed to save recommendation.' });
       }
     });
     return;
